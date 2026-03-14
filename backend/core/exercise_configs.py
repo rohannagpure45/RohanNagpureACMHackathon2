@@ -44,7 +44,7 @@ EXERCISE_CONFIGS: dict[str, ExerciseConfig] = {
         },
         rep_direction="peak",
         peak_prominence=12,
-        min_rep_duration_sec=0.6,
+        min_rep_duration_sec=1.2,
         fatigue_thresholds={
             "rom_decrease": 0.15,
             "duration_increase": 0.20,
@@ -62,7 +62,7 @@ EXERCISE_CONFIGS: dict[str, ExerciseConfig] = {
         },
         rep_direction="valley",
         peak_prominence=12,
-        min_rep_duration_sec=0.5,
+        min_rep_duration_sec=1.5,
         fatigue_thresholds={
             "rom_decrease": 0.15,
             "duration_increase": 0.20,
@@ -78,7 +78,7 @@ EXERCISE_CONFIGS: dict[str, ExerciseConfig] = {
         },
         rep_direction="valley",
         peak_prominence=10,
-        min_rep_duration_sec=0.3,
+        min_rep_duration_sec=0.8,
         fatigue_thresholds={
             "rom_decrease": 0.15,
             "duration_increase": 0.20,
