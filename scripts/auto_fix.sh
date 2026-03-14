@@ -12,8 +12,8 @@ echo "=== Auto-Fix Runner ==="
 echo "Date: $(date)"
 echo ""
 
-# Check if there are uncommitted changes
-if ! git diff --quiet || [ -n "$(git status --porcelain)" ]; then
+# Check if there are uncommitted changes (excluding log files)
+if ! git diff --quiet || [ -n "$(git status --porcelain | grep -v '.log$')" ]; then
     echo "Uncommitted changes exist. Please commit or stash them first."
     exit 1
 fi
