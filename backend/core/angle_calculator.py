@@ -3,20 +3,21 @@
 import numpy as np
 
 # MediaPipe landmark indices used per exercise type.
-# Each entry maps angle_name -> (point_a_idx, vertex_b_idx, point_c_idx).
-EXERCISE_ANGLES: dict[str, dict[str, tuple[int, int, int]]] = {
+# Each entry maps angle_name -> list of (point_a_idx, vertex_b_idx, point_c_idx).
+# The extractor will try all tuples and pick the one with the highest overall visibility.
+EXERCISE_ANGLES: dict[str, dict[str, list[tuple[int, int, int]]]] = {
     "arm_raise": {
-        "shoulder_angle": (23, 11, 15),  # hip-shoulder-wrist
-        "elbow_angle": (11, 13, 15),     # shoulder-elbow-wrist
+        "shoulder_angle": [(23, 11, 15), (24, 12, 16)],  # left and right hip-shoulder-wrist
+        "elbow_angle": [(11, 13, 15), (12, 14, 16)],     # left and right shoulder-elbow-wrist
     },
     "lunge": {
-        "left_knee_angle": (23, 25, 27),   # left: hip-knee-ankle
-        "right_knee_angle": (24, 26, 28),  # right: hip-knee-ankle
-        "hip_angle": (11, 23, 25),         # shoulder-hip-knee
+        "left_knee_angle": [(23, 25, 27)],   # left: hip-knee-ankle
+        "right_knee_angle": [(24, 26, 28)],  # right: hip-knee-ankle
+        "hip_angle": [(11, 23, 25), (12, 24, 26)], # left and right shoulder-hip-knee
     },
     "pushup": {
-        "elbow_angle": (11, 13, 15),     # shoulder-elbow-wrist
-        "shoulder_angle": (13, 11, 23),  # elbow-shoulder-hip
+        "elbow_angle": [(11, 13, 15), (12, 14, 16)],     # left and right shoulder-elbow-wrist
+        "shoulder_angle": [(13, 11, 23), (14, 12, 24)],  # left and right elbow-shoulder-hip
     },
 }
 
@@ -60,7 +61,7 @@ def extract_joint_angles(
     ----------
     landmarks : list
         Indexed by MediaPipe landmark index (0-32).  Each element must
-        expose ``.x``, ``.y``, and ``.z`` attributes.
+        expose ``.x``, ``.y``, ``.z``, and ideally ``.visibility`` attributes.
     exercise_type : str
         One of ``"arm_raise"``, ``"lunge"``, ``"pushup"``.
 
@@ -74,21 +75,39 @@ def extract_joint_angles(
     angle_defs = EXERCISE_ANGLES.get(exercise_type, {})
     results: dict[str, float] = {}
 
-    for angle_name, (idx_a, idx_b, idx_c) in angle_defs.items():
-        max_idx = max(idx_a, idx_b, idx_c)
-        if len(landmarks) <= max_idx:
-            continue
+    for angle_name, tuple_list in angle_defs.items():
+        best_angle = None
+        best_visibility = -1.0
 
-        try:
-            lm_a = landmarks[idx_a]
-            lm_b = landmarks[idx_b]
-            lm_c = landmarks[idx_c]
-            pt_a = (lm_a.x, lm_a.y, lm_a.z)
-            pt_b = (lm_b.x, lm_b.y, lm_b.z)
-            pt_c = (lm_c.x, lm_c.y, lm_c.z)
-        except AttributeError:
-            continue
+        for (idx_a, idx_b, idx_c) in tuple_list:
+            max_idx = max(idx_a, idx_b, idx_c)
+            if len(landmarks) <= max_idx:
+                continue
 
-        results[angle_name] = calculate_angle(pt_a, pt_b, pt_c)
+            try:
+                lm_a = landmarks[idx_a]
+                lm_b = landmarks[idx_b]
+                lm_c = landmarks[idx_c]
+                pt_a = (lm_a.x, lm_a.y, lm_a.z)
+                pt_b = (lm_b.x, lm_b.y, lm_b.z)
+                pt_c = (lm_c.x, lm_c.y, lm_c.z)
+
+                # Use geometric minimum for the whole angle's visibility.
+                # If visibility is missing, default to 1.0.
+                vis_a = getattr(lm_a, "visibility", 1.0)
+                vis_b = getattr(lm_b, "visibility", 1.0)
+                vis_c = getattr(lm_c, "visibility", 1.0)
+                tuple_vis = min(vis_a, vis_b, vis_c)
+
+            except AttributeError:
+                continue
+
+            # Pick the angle definition that has the highest overall visibility
+            if tuple_vis > best_visibility:
+                best_visibility = tuple_vis
+                best_angle = calculate_angle(pt_a, pt_b, pt_c)
+
+        if best_angle is not None:
+            results[angle_name] = best_angle
 
     return results
