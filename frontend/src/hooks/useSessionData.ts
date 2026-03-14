@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import type { Session, Rep, FatigueScore } from '../types/index.ts';
 
-const api = axios.create({ baseURL: 'http://localhost:8000' });
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const api = axios.create({ baseURL: API_URL });
 
 export function useSession(id: string | undefined) {
   const [session, setSession] = useState<Session | null>(null);

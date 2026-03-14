@@ -4,7 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import type { UploadResponse } from '../types/index.ts';
 
-const api = axios.create({ baseURL: 'http://localhost:8000' });
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const api = axios.create({ baseURL: API_URL });
 
 const exerciseTypes = [
   { value: 'arm_raise', label: 'Arm Raise' },
