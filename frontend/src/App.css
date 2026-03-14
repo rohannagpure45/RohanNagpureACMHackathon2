@@ -1,20 +1,28 @@
 /* ===== Variables ===== */
 :root {
-  --bg-primary: #0f0f1a;
-  --bg-secondary: #1a1a2e;
-  --bg-card: #1e1e32;
-  --bg-hover: #2a2a44;
-  --text-primary: #e8e8f0;
-  --text-secondary: #a0a0b8;
-  --text-muted: #6c6c88;
-  --accent: #6c63ff;
-  --accent-hover: #5a52e0;
-  --green: #4caf50;
-  --yellow: #ff9800;
-  --red: #f44336;
-  --border: #2e2e48;
-  --radius: 10px;
-  --shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  --bg-primary: #EFF6FF;
+  --bg-secondary: #FFFFFF;
+  --bg-card: #FFFFFF;
+  --bg-hover: #DBEAFE;
+  --text-primary: #1E40AF;
+  --text-secondary: #1E3A8A;
+  --text-muted: #3B82F6;
+  --accent: #2563EB;
+  --accent-hover: #1D4ED8;
+  --green: #16A34A;
+  --yellow: #F59E0B;
+  --red: #DC2626;
+  --cta: #F97316;
+  --cta-hover: #EA580C;
+  --border: #1E40AF;
+  --radius: 4px;
+  --shadow: 4px 4px 0px var(--border);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.2px;
 }
 
 .app {
@@ -36,13 +44,11 @@
 }
 
 .app-title {
-  font-size: 2.8rem;
+  font-family: 'Outfit', sans-serif;
+  font-size: 3.5rem;
   font-weight: 800;
-  background: linear-gradient(135deg, var(--accent), #a78bfa, #38bdf8);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  letter-spacing: -0.5px;
+  color: var(--cta);
+  letter-spacing: -1px;
 }
 
 .app-subtitle {
@@ -54,7 +60,7 @@
 /* ===== Upload Form ===== */
 .upload-form {
   background: var(--bg-card);
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   border-radius: var(--radius);
   padding: 28px;
   box-shadow: var(--shadow);
@@ -154,42 +160,59 @@
 
 /* ===== Buttons ===== */
 .btn {
-  padding: 10px 24px;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  font-weight: 600;
+  padding: 12px 28px;
+  border-radius: var(--radius);
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
   cursor: pointer;
-  border: none;
+  border: 2px solid var(--border);
   transition: all 0.2s ease;
   text-decoration: none;
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  box-shadow: 4px 4px 0px var(--border);
 }
 
 .btn-primary {
-  background: var(--accent);
+  background: var(--cta);
   color: white;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: var(--accent-hover);
-  transform: translateY(-1px);
+  background: var(--cta-hover);
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0px var(--border);
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: translate(4px, 4px);
+  box-shadow: 0px 0px 0px var(--border);
 }
 
 .btn-primary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 .btn-secondary {
   background: var(--bg-card);
   color: var(--text-primary);
-  border: 1px solid var(--border);
 }
 
 .btn-secondary:hover {
   background: var(--bg-hover);
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0px var(--border);
+}
+
+.btn-secondary:active {
+  transform: translate(4px, 4px);
+  box-shadow: 0px 0px 0px var(--border);
 }
 
 /* ===== Progress Bar ===== */
@@ -271,7 +294,7 @@
 /* ===== Session List ===== */
 .session-list {
   background: var(--bg-card);
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   border-radius: var(--radius);
   padding: 28px;
   box-shadow: var(--shadow);
@@ -448,7 +471,7 @@
 /* ===== Video Player ===== */
 .video-player {
   background: var(--bg-card);
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   border-radius: var(--radius);
   overflow: hidden;
   box-shadow: var(--shadow);
@@ -548,7 +571,7 @@
 /* ===== Degradation Chart ===== */
 .degradation-chart {
   background: var(--bg-card);
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   border-radius: var(--radius);
   padding: 20px;
   box-shadow: var(--shadow);
@@ -572,7 +595,7 @@
 /* ===== Rep Table ===== */
 .rep-table-container {
   background: var(--bg-card);
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   border-radius: var(--radius);
   padding: 20px;
   box-shadow: var(--shadow);
