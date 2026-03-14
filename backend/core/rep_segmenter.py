@@ -113,6 +113,33 @@ class RepSegmenter:
 
         prominences = props.get("prominences", np.ones(len(peaks)))
 
+        # Filter out false peaks that don't match the expected range of motion (e.g. returning to rest)
+        if len(peaks) > 0:
+            if self.config.rep_direction == "valley":
+                baseline = float(np.percentile(signal_smooth, 90))
+            else:
+                baseline = float(np.percentile(signal_smooth, 10))
+
+            peak_vals = signal_smooth[peaks]
+            median_peak = float(np.median(peak_vals))
+            median_excursion = abs(baseline - median_peak)
+            
+            # Require the peak to achieve at least 30% of the median excursion
+            valid_peaks = []
+            valid_proms = []
+            for pk_idx, prom in zip(peaks, prominences):
+                val = signal_smooth[pk_idx]
+                if self.config.rep_direction == "valley":
+                    if val < baseline - (median_excursion * 0.3):
+                        valid_peaks.append(pk_idx)
+                        valid_proms.append(prom)
+                else:
+                    if val > baseline + (median_excursion * 0.3):
+                        valid_peaks.append(pk_idx)
+                        valid_proms.append(prom)
+            peaks = np.array(valid_peaks, dtype=int)
+            prominences = np.array(valid_proms, dtype=float)
+
         reps = []
         for i, peak_idx in enumerate(peaks):
             # Boundaries: midpoint between adjacent peaks
