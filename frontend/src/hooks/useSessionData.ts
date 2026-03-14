@@ -1,13 +1,16 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import type { Session, Rep, FatigueScore } from '../types/index.ts';
+import type { Session, Rep, FatigueScore, FormScore, AIFeedback } from '../types/index.ts';
 
-const api = axios.create({ baseURL: 'http://localhost:8000' });
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const api = axios.create({ baseURL: API_URL });
 
 export function useSession(id: string | undefined) {
   const [session, setSession] = useState<Session | null>(null);
   const [reps, setReps] = useState<Rep[]>([]);
   const [fatigue, setFatigue] = useState<FatigueScore[]>([]);
+  const [formScores, setFormScores] = useState<FormScore[]>([]);
+  const [feedback, setFeedback] = useState<AIFeedback | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -17,14 +20,18 @@ export function useSession(id: string | undefined) {
 
     const fetchData = async () => {
       try {
-        const [sessionRes, repsRes, fatigueRes] = await Promise.all([
+        const [sessionRes, repsRes, fatigueRes, formRes, feedbackRes] = await Promise.all([
           api.get<Session>(`/api/sessions/${id}`),
           api.get<Rep[]>(`/api/sessions/${id}/reps`),
           api.get<FatigueScore[]>(`/api/sessions/${id}/fatigue`),
+          api.get<FormScore[]>(`/api/sessions/${id}/form`),
+          api.get<AIFeedback | null>(`/api/sessions/${id}/feedback`),
         ]);
         setSession(sessionRes.data);
         setReps(repsRes.data);
         setFatigue(fatigueRes.data);
+        setFormScores(formRes.data);
+        setFeedback(feedbackRes.data);
         setLoading(false);
 
         if (sessionRes.data.status !== 'processing' && intervalRef.current) {
@@ -49,7 +56,7 @@ export function useSession(id: string | undefined) {
     };
   }, [id]);
 
-  return { session, reps, fatigue, loading, error };
+  return { session, reps, fatigue, formScores, feedback, loading, error };
 }
 
 export function useSessions() {
@@ -85,4 +92,13 @@ export function useSessions() {
   };
 
   return { sessions, loading, error, refetch };
+}
+
+export async function deleteSession(sessionId: string): Promise<boolean> {
+  try {
+    await api.delete(`/api/sessions/${sessionId}`);
+    return true;
+  } catch {
+    return false;
+  }
 }

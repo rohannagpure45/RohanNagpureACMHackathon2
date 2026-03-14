@@ -21,5 +21,5 @@ def get_db():
 
 
 def init_db():
-    from backend.db.models import Session, Rep, RepMetric, FatigueScore  # noqa: F401
+    from backend.db.models import Session, Rep, RepMetric, FatigueScore, FormScore, AIFeedback  # noqa: F401
     Base.metadata.create_all(bind=engine)

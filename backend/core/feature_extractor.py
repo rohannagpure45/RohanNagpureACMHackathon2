@@ -25,18 +25,36 @@ class FeatureExtractor:
     ) -> RepFeatures:
         angles_arr = np.array(angles, dtype=float)
         times_arr = np.array(timestamps, dtype=float)
+        
+        # Smooth the angles to prevent massive velocity spikes from MediaPipe frame jitter
+        from scipy.signal import savgol_filter
+        if len(angles_arr) >= 5:
+            # use a small window for rep-level smoothing
+            window = min(7, len(angles_arr) - 1)
+            if window % 2 == 0:
+                window -= 1
+            if window >= 3:
+                angles_arr = savgol_filter(angles_arr, window_length=window, polyorder=2)
 
         rom = float(np.max(angles_arr) - np.min(angles_arr))
         peak_angle = float(np.max(angles_arr))
         duration = float(times_arr[-1] - times_arr[0]) if len(times_arr) > 1 else 0.0
 
         # Velocity
-        if len(angles_arr) > 1 and len(times_arr) > 1:
+        if duration > 0.1:
+            # Avg velocity = total distance traveled (roughly 2 * ROM) / duration
+            # But relying strictly on the smoothed difference is better
             dt = np.diff(times_arr)
-            dt[dt == 0] = 1e-6
+            dt[dt < 1e-3] = 1e-3
             velocities = np.abs(np.diff(angles_arr) / dt)
-            avg_velocity = float(np.mean(velocities))
-            peak_velocity = float(np.max(velocities))
+            
+            # Remove top 5% of velocities to discard remaining artificial spikes
+            if len(velocities) > 5:
+                p95 = np.percentile(velocities, 95)
+                velocities = velocities[velocities <= p95]
+                
+            avg_velocity = float(np.mean(velocities)) if len(velocities) > 0 else 0.0
+            peak_velocity = float(np.max(velocities)) if len(velocities) > 0 else 0.0
         else:
             avg_velocity = 0.0
             peak_velocity = 0.0

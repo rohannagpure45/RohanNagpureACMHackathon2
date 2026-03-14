@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import type { RepBoundary } from '../types/index.ts';
 
 interface VideoPlayerProps {
@@ -6,6 +6,7 @@ interface VideoPlayerProps {
   repBoundaries: RepBoundary[];
   currentTime?: number;
   onTimeUpdate?: (time: number) => void;
+  crossOrigin?: 'anonymous' | 'use-credentials' | '';
 }
 
 export default function VideoPlayer({
@@ -13,6 +14,7 @@ export default function VideoPlayer({
   repBoundaries,
   currentTime,
   onTimeUpdate,
+  crossOrigin = 'anonymous',
 }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const seekingRef = useRef(false);
@@ -32,7 +34,13 @@ export default function VideoPlayer({
     }
   };
 
-  const duration = videoRef.current?.duration || 1;
+  const [duration, setDuration] = useState(1);
+  
+  useEffect(() => {
+    if (videoRef.current && videoRef.current.duration) {
+      setDuration(videoRef.current.duration);
+    }
+  }, [videoUrl]);
 
   return (
     <div className="video-player">
@@ -40,6 +48,8 @@ export default function VideoPlayer({
         ref={videoRef}
         src={videoUrl}
         controls
+        crossOrigin={crossOrigin}
+        onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
         onTimeUpdate={handleTimeUpdate}
         onSeeking={() => { seekingRef.current = true; }}
         onSeeked={() => { seekingRef.current = false; }}

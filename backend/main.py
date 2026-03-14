@@ -1,11 +1,17 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+import logging
 
 from backend.config import UPLOAD_DIR
 from backend.db.database import init_db
 from backend.api.routes_upload import router as upload_router
 from backend.api.routes_sessions import router as sessions_router
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
 
 app = FastAPI(title="AIR Health - Fatigue Detection API")
 

@@ -1,3 +1,5 @@
+"""Fatigue detection with sliding baseline and multi-factor scoring."""
+
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
@@ -15,6 +17,7 @@ class FatigueResult:
     symmetry_deviation: float
     is_alert: bool
     alert_message: str
+    risk_level: str = "low"  # low, moderate, high
 
 
 class BaseFatigueDetector(ABC):
@@ -28,50 +31,64 @@ class BaseFatigueDetector(ABC):
 
 
 class ThresholdFatigueDetector(BaseFatigueDetector):
-    def __init__(self, rom_threshold: float = 0.15, duration_threshold: float = 0.20, symmetry_threshold: float = 0.15):
+    """Detects fatigue using baseline comparison with adaptive thresholds."""
+
+    def __init__(self, rom_threshold: float = 0.15,
+                 duration_threshold: float = 0.20,
+                 symmetry_threshold: float = 0.15):
         self.rom_threshold = rom_threshold
         self.duration_threshold = duration_threshold
         self.symmetry_threshold = symmetry_threshold
         self.baseline_window = 3
 
+    def _safe_deviation(self, current: float, baseline: float, invert: bool = False) -> float:
+        """Compute signed deviation. invert=True means increase is bad (duration)."""
+        if abs(baseline) < 1e-6:
+            return 0.0
+        if invert:
+            return (current - baseline) / abs(baseline)
+        return (baseline - current) / abs(baseline)
+
+    def _classify_risk(self, score: float) -> str:
+        if score < 0.3:
+            return "low"
+        if score < 0.6:
+            return "moderate"
+        return "high"
+
     def analyze_session(self, rep_features: list[RepFeatures]) -> list[FatigueResult]:
         if not rep_features:
             return []
 
-        # Baseline from first N reps
+        # Baseline from first N reps (robust: use median instead of mean)
         n = min(self.baseline_window, len(rep_features))
-        baseline_rom = np.mean([r.rom_degrees for r in rep_features[:n]])
-        baseline_duration = np.mean([r.duration_sec for r in rep_features[:n]])
-        baseline_symmetry = np.mean([r.symmetry_score for r in rep_features[:n]])
-
-        if baseline_rom == 0:
-            baseline_rom = 1e-6
-        if baseline_duration == 0:
-            baseline_duration = 1e-6
-        if baseline_symmetry == 0:
-            baseline_symmetry = 1e-6
+        baseline_rom = float(np.median([r.rom_degrees for r in rep_features[:n]]))
+        baseline_duration = float(np.median([r.duration_sec for r in rep_features[:n]]))
+        baseline_symmetry = float(np.median([r.symmetry_score for r in rep_features[:n]]))
 
         results = []
         for rep in rep_features:
-            rom_dev = (baseline_rom - rep.rom_degrees) / baseline_rom
-            dur_dev = (rep.duration_sec - baseline_duration) / baseline_duration
-            sym_dev = (baseline_symmetry - rep.symmetry_score) / baseline_symmetry
+            rom_dev = self._safe_deviation(rep.rom_degrees, baseline_rom)
+            dur_dev = self._safe_deviation(rep.duration_sec, baseline_duration, invert=True)
+            sym_dev = self._safe_deviation(rep.symmetry_score, baseline_symmetry)
 
-            # Composite fatigue score (0-1 range, clipped)
+            # Composite fatigue score (0-1)
             fatigue_score = float(np.clip(
-                0.4 * max(rom_dev, 0) / self.rom_threshold +
-                0.35 * max(dur_dev, 0) / self.duration_threshold +
-                0.25 * max(sym_dev, 0) / self.symmetry_threshold,
+                0.40 * max(rom_dev, 0) / max(self.rom_threshold, 1e-6) +
+                0.35 * max(dur_dev, 0) / max(self.duration_threshold, 1e-6) +
+                0.25 * max(sym_dev, 0) / max(self.symmetry_threshold, 1e-6),
                 0.0, 1.0
             ))
+
+            risk_level = self._classify_risk(fatigue_score)
 
             alerts = []
             if rom_dev > self.rom_threshold:
                 alerts.append(f"ROM decreased {rom_dev:.0%}")
             if dur_dev > self.duration_threshold:
-                alerts.append(f"Duration increased {dur_dev:.0%}")
+                alerts.append(f"Rep slower by {dur_dev:.0%}")
             if sym_dev > self.symmetry_threshold:
-                alerts.append(f"Symmetry decreased {sym_dev:.0%}")
+                alerts.append(f"Symmetry dropped {sym_dev:.0%}")
 
             is_alert = len(alerts) > 0
             alert_message = "; ".join(alerts)
@@ -84,6 +101,7 @@ class ThresholdFatigueDetector(BaseFatigueDetector):
                 symmetry_deviation=sym_dev,
                 is_alert=is_alert,
                 alert_message=alert_message,
+                risk_level=risk_level,
             ))
 
         return results
