@@ -1,5 +1,5 @@
 export interface Session {
-  id: string;
+  id: number;
   video_path: string;
   exercise_type: string;
   status: string;
