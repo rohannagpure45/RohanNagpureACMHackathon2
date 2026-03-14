@@ -1,0 +1,22 @@
+
+# Playwright
+node_modules/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
+
+# Python
+data/
+__pycache__/
+*.pyc
+*.pyo
+backend/venv/
+*.db
+.DS_Store
+dist/
+.env
+*.joblib
+drive-download-*.zip
+*.mp4
