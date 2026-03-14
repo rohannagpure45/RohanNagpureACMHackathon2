@@ -7,17 +7,22 @@ import numpy as np
 # The extractor will try all tuples and pick the one with the highest overall visibility.
 EXERCISE_ANGLES: dict[str, dict[str, list[tuple[int, int, int]]]] = {
     "arm_raise": {
-        "shoulder_angle": [(23, 11, 15), (24, 12, 16)],  # left and right hip-shoulder-wrist
-        "elbow_angle": [(11, 13, 15), (12, 14, 16)],     # left and right shoulder-elbow-wrist
+        "shoulder_angle": [(23, 11, 15)],
+        "right_shoulder_angle": [(24, 12, 16)],
+        "elbow_angle": [(11, 13, 15)],
+        "right_elbow_angle": [(12, 14, 16)],
     },
     "lunge": {
-        "left_knee_angle": [(23, 25, 27)],   # left: hip-knee-ankle
-        "right_knee_angle": [(24, 26, 28)],  # right: hip-knee-ankle
-        "hip_angle": [(11, 23, 25), (12, 24, 26)], # left and right shoulder-hip-knee
+        "left_knee_angle": [(23, 25, 27)],
+        "right_knee_angle": [(24, 26, 28)],
+        "hip_angle": [(11, 23, 25)],
+        "right_hip_angle": [(12, 24, 26)],
     },
     "pushup": {
-        "elbow_angle": [(11, 13, 15), (12, 14, 16)],     # left and right shoulder-elbow-wrist
-        "shoulder_angle": [(13, 11, 23), (14, 12, 24)],  # left and right elbow-shoulder-hip
+        "elbow_angle": [(11, 13, 15)],
+        "right_elbow_angle": [(12, 14, 16)],
+        "shoulder_angle": [(13, 11, 23)],
+        "right_shoulder_angle": [(14, 12, 24)],
     },
 }
 

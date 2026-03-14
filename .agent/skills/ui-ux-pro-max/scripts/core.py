@@ -9,7 +9,6 @@ import re
 from pathlib import Path
 from math import log
 from collections import defaultdict
-from functools import lru_cache
 
 # ============ CONFIGURATION ============
 DATA_DIR = Path(__file__).parent.parent / "data"
@@ -153,6 +152,9 @@ class BM25:
 
     def score(self, query):
         """Score all documents against query"""
+        if not self.corpus:
+            return []
+        
         query_tokens = self.tokenize(query)
         scores = []
 
