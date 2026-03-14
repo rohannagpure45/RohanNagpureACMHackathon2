@@ -1,5 +1,5 @@
 export interface Session {
-  id: string;
+  id: number;
   video_path: string;
   exercise_type: string;
   status: string;
@@ -77,6 +77,6 @@ export interface TimelineData {
 }
 
 export interface UploadResponse {
-  session_id: string;
+  session_id: number;
   status: string;
 }

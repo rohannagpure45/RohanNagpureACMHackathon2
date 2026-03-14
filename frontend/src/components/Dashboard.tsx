@@ -11,7 +11,8 @@ import AICoach from './AICoach.tsx';
 import FormQuality from './FormQuality.tsx';
 import { formatDuration } from '../utils/formatters.ts';
 
-const api = axios.create({ baseURL: 'http://localhost:8000' });
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const api = axios.create({ baseURL: API_URL });
 
 const exerciseLabels: Record<string, string> = {
   arm_raise: 'Arm Raise',
@@ -68,7 +69,7 @@ export default function Dashboard() {
   }
 
   const videoUrl = session.video_path
-    ? `http://localhost:8000/${session.video_path}`
+    ? `${API_URL}${session.video_path}`
     : '';
 
   return (

@@ -1,4 +1,8 @@
 
+# Logs
+*.log
+scripts/*.log
+
 # Playwright
 node_modules/
 /test-results/
