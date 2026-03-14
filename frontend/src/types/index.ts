@@ -57,6 +57,6 @@ export interface TimelineData {
 }
 
 export interface UploadResponse {
-  session_id: string;
+  session_id: number;
   status: string;
 }
