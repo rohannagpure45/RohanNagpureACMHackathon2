@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { useSession } from '../hooks/useSessionData.ts';
+import { useSession, deleteSession } from '../hooks/useSessionData.ts';
 import type { TimelineData, RepBoundary } from '../types/index.ts';
 import VideoPlayer from './VideoPlayer.tsx';
 import FatigueAlert from './FatigueAlert.tsx';
 import DegradationChart from './DegradationChart.tsx';
 import RepTable from './RepTable.tsx';
+import AICoach from './AICoach.tsx';
+import FormQuality from './FormQuality.tsx';
 import { formatDuration } from '../utils/formatters.ts';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -20,23 +22,32 @@ const exerciseLabels: Record<string, string> = {
 
 export default function Dashboard() {
   const { id } = useParams<{ id: string }>();
-  const { session, reps, fatigue, loading, error } = useSession(id);
+  const navigate = useNavigate();
+  const { session, reps, fatigue, formScores, feedback, loading, error } = useSession(id);
   const [repBoundaries, setRepBoundaries] = useState<RepBoundary[]>([]);
   const [currentTime, setCurrentTime] = useState(0);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (!id) return;
     api
       .get<TimelineData>(`/api/sessions/${id}/timeline`)
       .then((res) => setRepBoundaries(res.data.rep_boundaries))
-      .catch(() => { /* timeline optional */ });
+      .catch(() => {});
   }, [id]);
 
   const handleRepClick = (repNumber: number) => {
     const boundary = repBoundaries.find((rb) => rb.rep_number === repNumber);
-    if (boundary) {
-      setCurrentTime(boundary.start_time);
-    }
+    if (boundary) setCurrentTime(boundary.start_time);
+  };
+
+  const handleDelete = async () => {
+    if (!id) return;
+    if (!confirm('Permanently delete this session and its video data? This cannot be undone.')) return;
+    setDeleting(true);
+    const ok = await deleteSession(id);
+    if (ok) navigate('/');
+    else setDeleting(false);
   };
 
   if (loading) {
@@ -74,6 +85,14 @@ export default function Dashboard() {
             <span>{new Date(session.created_at).toLocaleString()}</span>
           </div>
         </div>
+        <button
+          className="btn btn-delete"
+          onClick={handleDelete}
+          disabled={deleting}
+          title="Permanently delete session and video"
+        >
+          {deleting ? 'Deleting...' : '&#128465; Delete'}
+        </button>
       </header>
 
       {session.status === 'processing' && (
@@ -83,6 +102,7 @@ export default function Dashboard() {
         </div>
       )}
 
+      <AICoach feedback={feedback} status={session.status} />
       <FatigueAlert fatigueData={fatigue} />
 
       <div className="dashboard-grid">
@@ -95,6 +115,7 @@ export default function Dashboard() {
               onTimeUpdate={setCurrentTime}
             />
           )}
+          <FormQuality formScores={formScores} />
         </div>
         <div className="dashboard-right">
           <DegradationChart reps={reps} fatigue={fatigue} />

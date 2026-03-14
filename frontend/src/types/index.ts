@@ -37,6 +37,26 @@ export interface FatigueScore {
   symmetry_deviation: number;
   is_alert: boolean;
   alert_message: string | null;
+  risk_level: string;
+}
+
+export interface FormScore {
+  rep_number: number;
+  form_score: number;
+  issues: string; // JSON string
+}
+
+export interface FormIssue {
+  name: string;
+  severity: string;
+  message: string;
+}
+
+export interface AIFeedback {
+  summary: string;
+  recommendations: string; // JSON string
+  risk_assessment: string;
+  encouragement: string;
 }
 
 export interface AnglePoint {

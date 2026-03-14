@@ -47,6 +47,7 @@ class FatigueScoreResponse(BaseModel):
     symmetry_deviation: float | None = None
     is_alert: bool
     alert_message: str
+    risk_level: str = "low"
 
     model_config = {"from_attributes": True}
 
@@ -71,3 +72,26 @@ class RepBoundaryResponse(BaseModel):
 class TimelineResponse(BaseModel):
     angle_series: list[AngleDataPoint]
     rep_boundaries: list[RepBoundaryResponse]
+
+
+
+class FormScoreResponse(BaseModel):
+    rep_number: int
+    form_score: float
+    issues: str = "[]"  # JSON string
+
+    model_config = {"from_attributes": True}
+
+
+class AIFeedbackResponse(BaseModel):
+    summary: str
+    recommendations: str = "[]"  # JSON string
+    risk_assessment: str = "low"
+    encouragement: str = ""
+
+    model_config = {"from_attributes": True}
+
+
+class DeleteResponse(BaseModel):
+    success: bool
+    message: str
