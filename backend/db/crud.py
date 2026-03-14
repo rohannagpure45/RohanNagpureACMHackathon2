@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session as DBSession
-from backend.db.models import Session, Rep, RepMetric, FatigueScore
+from backend.db.models import Session, Rep, RepMetric, FatigueScore, FormScore, AIFeedback
 
 
 # --- Session CRUD ---
@@ -29,6 +29,15 @@ def update_session_status(db: DBSession, session_id: int, status: str, **kwargs)
         db.commit()
         db.refresh(session)
     return session
+
+
+def delete_session(db: DBSession, session_id: int) -> bool:
+    session = get_session(db, session_id)
+    if session:
+        db.delete(session)
+        db.commit()
+        return True
+    return False
 
 
 # --- Rep CRUD ---
@@ -69,3 +78,35 @@ def get_fatigue_scores(db: DBSession, session_id: int) -> list[FatigueScore]:
     return db.query(FatigueScore).filter(
         FatigueScore.session_id == session_id
     ).order_by(FatigueScore.rep_number).all()
+
+
+# --- FormScore CRUD ---
+
+def create_form_score(db: DBSession, session_id: int, **kwargs) -> FormScore:
+    score = FormScore(session_id=session_id, **kwargs)
+    db.add(score)
+    db.commit()
+    db.refresh(score)
+    return score
+
+
+def get_form_scores(db: DBSession, session_id: int) -> list[FormScore]:
+    return db.query(FormScore).filter(
+        FormScore.session_id == session_id
+    ).order_by(FormScore.rep_number).all()
+
+
+# --- AIFeedback CRUD ---
+
+def create_ai_feedback(db: DBSession, session_id: int, **kwargs) -> AIFeedback:
+    feedback = AIFeedback(session_id=session_id, **kwargs)
+    db.add(feedback)
+    db.commit()
+    db.refresh(feedback)
+    return feedback
+
+
+def get_ai_feedback(db: DBSession, session_id: int) -> AIFeedback | None:
+    return db.query(AIFeedback).filter(
+        AIFeedback.session_id == session_id
+    ).first()

@@ -57,7 +57,7 @@ export default function Dashboard() {
   }
 
   const videoUrl = session.video_path
-    ? `http://localhost:8000/${session.video_path}`
+    ? `http://localhost:8000/uploads/${session.video_path.split('/').pop()}`
     : '';
 
   return (

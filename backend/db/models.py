@@ -1,5 +1,5 @@
 import datetime
-from sqlalchemy import Column, Integer, Float, String, DateTime, ForeignKey, Boolean
+from sqlalchemy import Column, Integer, Float, String, DateTime, ForeignKey, Boolean, Text
 from sqlalchemy.orm import relationship
 
 from backend.db.database import Base
@@ -18,6 +18,8 @@ class Session(Base):
 
     reps = relationship("Rep", back_populates="session", cascade="all, delete-orphan")
     fatigue_scores = relationship("FatigueScore", back_populates="session", cascade="all, delete-orphan")
+    form_scores = relationship("FormScore", back_populates="session", cascade="all, delete-orphan")
+    ai_feedback = relationship("AIFeedback", back_populates="session", cascade="all, delete-orphan", uselist=False)
 
 
 class Rep(Base):
@@ -32,6 +34,7 @@ class Rep(Base):
     start_time = Column(Float)
     end_time = Column(Float)
     is_complete = Column(Boolean, default=True)
+    confidence = Column(Float, default=1.0)
 
     session = relationship("Session", back_populates="reps")
     metrics = relationship("RepMetric", back_populates="rep", cascade="all, delete-orphan")
@@ -65,5 +68,31 @@ class FatigueScore(Base):
     symmetry_deviation = Column(Float)
     is_alert = Column(Boolean, default=False)
     alert_message = Column(String, default="")
+    risk_level = Column(String, default="low")
 
     session = relationship("Session", back_populates="fatigue_scores")
+
+
+class FormScore(Base):
+    __tablename__ = "form_scores"
+
+    id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(Integer, ForeignKey("sessions.id"), nullable=False)
+    rep_number = Column(Integer, nullable=False)
+    form_score = Column(Float, nullable=False)
+    issues = Column(Text, default="[]")  # JSON
+
+    session = relationship("Session", back_populates="form_scores")
+
+
+class AIFeedback(Base):
+    __tablename__ = "ai_feedback"
+
+    id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(Integer, ForeignKey("sessions.id"), nullable=False, unique=True)
+    summary = Column(Text, nullable=False)
+    recommendations = Column(Text, default="[]")  # JSON
+    risk_assessment = Column(String, default="low")
+    encouragement = Column(Text, default="")
+
+    session = relationship("Session", back_populates="ai_feedback")

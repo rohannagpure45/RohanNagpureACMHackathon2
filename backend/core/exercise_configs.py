@@ -43,8 +43,8 @@ EXERCISE_CONFIGS: dict[str, ExerciseConfig] = {
             "elbow_angle": (11, 13, 15),
         },
         rep_direction="peak",
-        peak_prominence=15,
-        min_rep_duration_sec=0.5,
+        peak_prominence=12,
+        min_rep_duration_sec=0.6,
         fatigue_thresholds={
             "rom_decrease": 0.15,
             "duration_increase": 0.20,
@@ -61,8 +61,8 @@ EXERCISE_CONFIGS: dict[str, ExerciseConfig] = {
             "hip_angle": (11, 23, 25),
         },
         rep_direction="valley",
-        peak_prominence=15,
-        min_rep_duration_sec=0.4,
+        peak_prominence=12,
+        min_rep_duration_sec=0.5,
         fatigue_thresholds={
             "rom_decrease": 0.15,
             "duration_increase": 0.20,

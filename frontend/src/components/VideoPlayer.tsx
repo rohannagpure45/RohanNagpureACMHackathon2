@@ -6,6 +6,7 @@ interface VideoPlayerProps {
   repBoundaries: RepBoundary[];
   currentTime?: number;
   onTimeUpdate?: (time: number) => void;
+  crossOrigin?: 'anonymous' | 'use-credentials' | '';
 }
 
 export default function VideoPlayer({
@@ -13,6 +14,7 @@ export default function VideoPlayer({
   repBoundaries,
   currentTime,
   onTimeUpdate,
+  crossOrigin = 'anonymous',
 }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const seekingRef = useRef(false);
@@ -40,7 +42,7 @@ export default function VideoPlayer({
         ref={videoRef}
         src={videoUrl}
         controls
-        crossOrigin="anonymous"
+        crossOrigin={crossOrigin}
         onTimeUpdate={handleTimeUpdate}
         onSeeking={() => { seekingRef.current = true; }}
         onSeeked={() => { seekingRef.current = false; }}
