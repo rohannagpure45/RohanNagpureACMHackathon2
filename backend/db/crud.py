@@ -1,11 +1,92 @@
+import datetime
+
 from sqlalchemy.orm import Session as DBSession
-from backend.db.models import Session, Rep, RepMetric, FatigueScore, FormScore, AIFeedback
+from backend.db.models import Session, Rep, RepMetric, FatigueScore, FormScore, AIFeedback, User, UserExerciseProfile
+
+
+# --- User CRUD ---
+
+def get_default_user(db: DBSession) -> User | None:
+    return db.query(User).filter(User.id == 1).first()
+
+
+def get_or_create_profile(db: DBSession, user_id: int, exercise_type: str) -> UserExerciseProfile:
+    profile = (
+        db.query(UserExerciseProfile)
+        .filter(UserExerciseProfile.user_id == user_id, UserExerciseProfile.exercise_type == exercise_type)
+        .first()
+    )
+    if not profile:
+        profile = UserExerciseProfile(user_id=user_id, exercise_type=exercise_type)
+        db.add(profile)
+        db.commit()
+        db.refresh(profile)
+    return profile
+
+
+def update_profile_after_session(
+    db: DBSession,
+    user_id: int,
+    exercise_type: str,
+    avg_rom: float,
+    avg_duration: float,
+    avg_form_score: float,
+    total_reps: int,
+    alpha: float = 0.3,
+) -> UserExerciseProfile:
+    profile = get_or_create_profile(db, user_id, exercise_type)
+
+    # EMA update
+    if profile.baseline_rom is None:
+        profile.baseline_rom = avg_rom
+    else:
+        profile.baseline_rom = alpha * avg_rom + (1 - alpha) * profile.baseline_rom
+
+    if profile.baseline_duration is None:
+        profile.baseline_duration = avg_duration
+    else:
+        profile.baseline_duration = alpha * avg_duration + (1 - alpha) * profile.baseline_duration
+
+    if profile.baseline_form_score is None:
+        profile.baseline_form_score = avg_form_score
+    else:
+        profile.baseline_form_score = alpha * avg_form_score + (1 - alpha) * profile.baseline_form_score
+
+    # Personal bests
+    if profile.best_rom is None or avg_rom > profile.best_rom:
+        profile.best_rom = avg_rom
+    if profile.best_form_score is None or avg_form_score > profile.best_form_score:
+        profile.best_form_score = avg_form_score
+
+    # Totals
+    profile.total_sessions += 1
+    profile.total_reps += total_reps
+
+    db.commit()
+    db.refresh(profile)
+    return profile
+
+
+def get_user_profiles(db: DBSession, user_id: int) -> list[UserExerciseProfile]:
+    return db.query(UserExerciseProfile).filter(UserExerciseProfile.user_id == user_id).all()
+
+
+def get_user_sessions_for_exercise(
+    db: DBSession, user_id: int, exercise_type: str, limit: int = 20
+) -> list[Session]:
+    return (
+        db.query(Session)
+        .filter(Session.user_id == user_id, Session.exercise_type == exercise_type, Session.status == "completed")
+        .order_by(Session.created_at.desc())
+        .limit(limit)
+        .all()
+    )
 
 
 # --- Session CRUD ---
 
-def create_session(db: DBSession, video_path: str, exercise_type: str) -> Session:
-    session = Session(video_path=video_path, exercise_type=exercise_type)
+def create_session(db: DBSession, video_path: str, exercise_type: str, user_id: int = 1) -> Session:
+    session = Session(video_path=video_path, exercise_type=exercise_type, user_id=user_id)
     db.add(session)
     db.commit()
     db.refresh(session)

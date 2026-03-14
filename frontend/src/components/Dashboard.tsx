@@ -69,7 +69,7 @@ export default function Dashboard() {
   }
 
   const videoUrl = session.video_path
-    ? `${API_URL}${session.video_path}`
+    ? `${API_URL.replace(/\/$/, '')}/${session.video_path.replace(/^\//, '')}`
     : '';
 
   return (

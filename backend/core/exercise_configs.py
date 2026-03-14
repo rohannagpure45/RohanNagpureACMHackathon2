@@ -22,6 +22,9 @@ class ExerciseConfig:
             When set, both left and right angles are combined into one signal.
         fatigue_thresholds: Mapping of metric_name to the threshold value that
             triggers a fatigue alert.
+        ideal_rep_duration_range: (min_sec, max_sec) range for a well-paced rep.
+        uses_weight: Whether the exercise typically involves external weight.
+        min_rom_degrees: Minimum range of motion (degrees) considered a full rep.
     """
 
     name: str
@@ -32,6 +35,9 @@ class ExerciseConfig:
     min_rep_duration_sec: float
     fatigue_thresholds: dict[str, float]
     bilateral_joint: str | None = None
+    ideal_rep_duration_range: tuple[float, float] = (1.5, 4.0)
+    uses_weight: bool = False
+    min_rom_degrees: float = 45.0
 
 
 EXERCISE_CONFIGS: dict[str, ExerciseConfig] = {
@@ -50,6 +56,9 @@ EXERCISE_CONFIGS: dict[str, ExerciseConfig] = {
             "duration_increase": 0.20,
             "symmetry_decrease": 0.15,
         },
+        ideal_rep_duration_range=(1.5, 4.0),
+        uses_weight=False,
+        min_rom_degrees=60.0,
     ),
     "lunge": ExerciseConfig(
         name="lunge",
@@ -68,6 +77,9 @@ EXERCISE_CONFIGS: dict[str, ExerciseConfig] = {
             "duration_increase": 0.20,
             "symmetry_decrease": 0.15,
         },
+        ideal_rep_duration_range=(2.0, 5.0),
+        uses_weight=False,
+        min_rom_degrees=70.0,
     ),
     "pushup": ExerciseConfig(
         name="pushup",
@@ -84,6 +96,9 @@ EXERCISE_CONFIGS: dict[str, ExerciseConfig] = {
             "duration_increase": 0.20,
             "symmetry_decrease": 0.15,
         },
+        ideal_rep_duration_range=(1.0, 3.5),
+        uses_weight=False,
+        min_rom_degrees=50.0,
     ),
 }
 

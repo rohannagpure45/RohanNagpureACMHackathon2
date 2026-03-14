@@ -80,3 +80,42 @@ export interface UploadResponse {
   session_id: number;
   status: string;
 }
+
+export interface UserProfile {
+  id: number;
+  name: string;
+  created_at: string | null;
+}
+
+export interface ExerciseProfile {
+  exercise_type: string;
+  baseline_rom: number | null;
+  baseline_duration: number | null;
+  baseline_form_score: number | null;
+  best_rom: number | null;
+  best_form_score: number | null;
+  total_sessions: number;
+  total_reps: number;
+}
+
+export interface ProgressData {
+  user: UserProfile;
+  profiles: ExerciseProfile[];
+  total_sessions: number;
+  total_reps: number;
+}
+
+export interface SessionHistoryPoint {
+  session_id: number;
+  created_at: string | null;
+  total_reps: number;
+  avg_rom: number | null;
+  avg_form_score: number | null;
+  avg_duration: number | null;
+}
+
+export interface ExerciseProgressData {
+  exercise_type: string;
+  profile: ExerciseProfile | null;
+  history: SessionHistoryPoint[];
+}

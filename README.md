@@ -2,7 +2,7 @@
 
 **ACM Northeastern 2026 Hackathon**
 
-AIR Health is a privacy-first exercise analysis platform that uses computer vision and AI to detect fatigue, assess form quality, and generate personalized coaching feedback — all processed entirely on your local device.
+AIR Health is a privacy-first exercise analysis platform that uses computer vision and AI to detect fatigue, assess form quality, and generate personalized coaching feedback — all processed entirely on your local device. It now tracks progress across sessions to give you personalized baselines, personal bests, and tempo/ROM coaching.
 
 ## The Problem
 
@@ -14,8 +14,9 @@ AIR Health turns any phone or laptop camera into an intelligent exercise coach:
 
 1. **Upload** a video of your exercise session
 2. **AI analyzes** your movement using MediaPipe pose estimation (33 body landmarks)
-3. **7-stage pipeline** processes your session: pose extraction → angle calculation → rep segmentation → feature extraction → form quality analysis → fatigue detection → AI coaching feedback
+3. **10-stage pipeline** processes your session end-to-end
 4. **Dashboard** shows rep-by-rep metrics, fatigue progression, form quality scores, and personalized recommendations
+5. **Progress page** tracks your baselines, personal bests, and improvement trends across sessions
 
 ## Key Features
 
@@ -24,36 +25,44 @@ AIR Health turns any phone or laptop camera into an intelligent exercise coach:
 | **Rep Detection** | Adaptive peak detection with confidence scoring, Savitzky-Golay smoothing, and automatic retry with lower thresholds |
 | **Fatigue Detection** | Multi-factor scoring (ROM decline, rep slowdown, symmetry loss) with median baseline and risk classification |
 | **Form Quality Analysis** | Exercise-specific angle rules detect bad form patterns (knee valgus, elbow flare, torso lean, shoulder impingement) |
-| **AI Coach** | Natural-language session summary, personalized recommendations, risk assessment, and encouragement |
+| **Tempo Coaching** | Detects too-fast/too-slow reps, inconsistent cadence, and pacing degradation across the set |
+| **ROM Coaching** | Flags partial reps below the exercise's minimum range-of-motion threshold and tracks intra-session decline |
+| **Progress Tracking** | EMA-based rolling baselines, personal bests, and session-over-session trend classification |
+| **AI Coach** | Natural-language session summary with tempo, ROM, and progress context; personalized recommendations; risk assessment |
 | **Privacy-First** | 100% local processing, no cloud uploads, one-click data deletion, HIPAA-aligned design |
 | **Video Sync** | Click any rep in the table to jump to that moment in the video |
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                    React Frontend                   │
-│  Upload Form → Dashboard → Video Player + Charts    │
-│ AI Coach │ Form Quality │ Fatigue Alerts │ Rep Table│
-└────────────────────────┬────────────────────────────┘
-                         │ REST API (axios)
-┌────────────────────────┴────────────────────────────┐
-│                  FastAPI Backend                    │
-│                                                     │
-│  ┌──────────────────────────────────────────────┐   │
-│  │            7-Stage Analysis Pipeline         │   │
-│  │                                              │   │
-│  │  1. Pose Extraction (MediaPipe PoseLandmarker)   │
-│  │  2. Joint Angle Calculation (3D vectors)     │   │
-│  │  3. Rep Segmentation (adaptive peak detect)  │   │
-│  │  4. Feature Extraction (ROM, velocity, etc.) │   │
-│  │  5. Form Quality Analysis (rule engine)      │   │
-│  │  6. Fatigue Detection (threshold + baseline) │   │
-│  │  7. AI Coaching Feedback (NLG engine)        │   │
-│  └──────────────────────────────────────────────┘   │
-│                                                     │
-│  SQLite (local) ← all data stays on-device          │
-└─────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                      React Frontend                         │
+│  Upload Form → Dashboard → Video Player + Charts            │
+│  AI Coach │ Form Quality │ Fatigue Alerts │ Rep Table       │
+│  Progress Page: Exercise Cards + Recharts Line Chart        │
+└────────────────────────┬────────────────────────────────────┘
+                         │ REST API
+┌────────────────────────┴────────────────────────────────────┐
+│                     FastAPI Backend                         │
+│                                                             │
+│  ┌────────────────────────────────────────────────────┐    │
+│  │             10-Stage Analysis Pipeline              │    │
+│  │                                                     │    │
+│  │  1. Pose Extraction (MediaPipe PoseLandmarker)      │    │
+│  │  2. Joint Angle Calculation (3D vectors)            │    │
+│  │  3. Rep Segmentation (adaptive peak detect)         │    │
+│  │  4. Feature Extraction (ROM, velocity, symmetry)   │    │
+│  │  5. Form Quality Analysis (rule engine)             │    │
+│  │  6. Fatigue Detection (threshold + baseline)        │    │
+│  │  7. AI Coaching Feedback (NLG engine)               │    │
+│  │  8. Tempo Analysis (pacing vs ideal range)          │    │
+│  │  9. ROM Analysis (depth vs minimum threshold)       │    │
+│  │  10. Progress Comparison (EMA baseline vs session)  │    │
+│  └────────────────────────────────────────────────────┘    │
+│                                                             │
+│  SQLite (local) ← all data stays on-device                  │
+│  User + UserExerciseProfile → rolling baselines & bests     │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ## Tech Stack
@@ -69,8 +78,6 @@ AIR Health turns any phone or laptop camera into an intelligent exercise coach:
 ### Prerequisites
 - Python 3.11+
 - Node.js 18+
-- 
-# RohanNagpureACMHackathon2
 
 ### Backend
 ```bash
@@ -78,6 +85,8 @@ cd airHealth
 pip install fastapi uvicorn sqlalchemy mediapipe opencv-python scipy numpy
 uvicorn backend.main:app --reload --port 8000
 ```
+
+> **Note:** On first run, the database is auto-created and a default local user (id=1) is seeded. If you have an existing `data/fatigue_detection.db` from before the progress-tracking update, delete it first so the new schema (User + UserExerciseProfile tables) is created cleanly.
 
 ### Frontend
 ```bash
@@ -90,11 +99,23 @@ Open http://localhost:5173 and upload an MP4 exercise video.
 
 ## Supported Exercises
 
-| Exercise | Tracked Joints | Detection |
-|---|---|---|
-| Arm Raise | Shoulder angle, Elbow angle | Peak detection |
-| Lunge | Left/Right knee, Hip angle | Valley detection (bilateral) |
-| Push-up | Elbow angle, Shoulder angle | Valley detection |
+| Exercise | Tracked Joints | Detection | Min ROM | Ideal Rep Duration |
+|---|---|---|---|---|
+| Arm Raise | Shoulder angle, Elbow angle | Peak | 60° | 1.5 – 4.0 s |
+| Lunge | Left/Right knee, Hip angle | Valley (bilateral) | 70° | 2.0 – 5.0 s |
+| Push-up | Elbow angle, Shoulder angle | Valley | 50° | 1.0 – 3.5 s |
+
+## Progress Tracking
+
+After each session, AIR Health updates your **exercise profile** using an exponential moving average (EMA, α = 0.3):
+
+- **Baseline ROM** — rolling average range of motion
+- **Baseline Form Score** — rolling average form quality
+- **Baseline Duration** — rolling average rep pace
+- **Personal Bests** — highest ROM and form score ever recorded
+- **Session History** — last 20 completed sessions per exercise, with per-session averages
+
+The `My Progress` page (http://localhost:5173/progress) shows exercise cards with your baselines and bests, a Recharts line chart of ROM and form over time, and a session history table with links to individual session dashboards.
 
 ## Privacy & Ethics
 
@@ -119,6 +140,7 @@ While AIR Health currently runs locally, the architecture is designed for scale:
 
 ## API Endpoints
 
+### Sessions
 | Method | Endpoint | Description |
 |---|---|---|
 | POST | `/api/upload` | Upload video + exercise type, starts pipeline |
@@ -130,3 +152,10 @@ While AIR Health currently runs locally, the architecture is designed for scale:
 | GET | `/api/sessions/:id/feedback` | AI coaching feedback |
 | GET | `/api/sessions/:id/timeline` | Timeline + rep boundaries |
 | DELETE | `/api/sessions/:id` | Delete session + video (privacy) |
+
+### User & Progress
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/user` | Default local user info |
+| GET | `/api/user/progress` | Overview: all exercise profiles + totals |
+| GET | `/api/user/progress/:exercise_type` | Per-exercise profile + session history |
