@@ -1,0 +1,73 @@
+from pydantic import BaseModel
+from datetime import datetime
+
+
+class SessionResponse(BaseModel):
+    id: int
+    video_path: str
+    exercise_type: str
+    status: str
+    created_at: datetime | None = None
+    total_reps: int
+    duration_sec: float
+
+    model_config = {"from_attributes": True}
+
+
+class RepMetricResponse(BaseModel):
+    rom_degrees: float | None = None
+    peak_angle: float | None = None
+    duration_sec: float | None = None
+    avg_velocity: float | None = None
+    peak_velocity: float | None = None
+    symmetry_score: float | None = None
+    smoothness: float | None = None
+
+    model_config = {"from_attributes": True}
+
+
+class RepResponse(BaseModel):
+    rep_number: int
+    start_frame: int | None = None
+    peak_frame: int | None = None
+    end_frame: int | None = None
+    start_time: float | None = None
+    end_time: float | None = None
+    is_complete: bool
+    metrics: RepMetricResponse | None = None
+
+    model_config = {"from_attributes": True}
+
+
+class FatigueScoreResponse(BaseModel):
+    rep_number: int
+    fatigue_score: float
+    rom_deviation: float | None = None
+    duration_deviation: float | None = None
+    symmetry_deviation: float | None = None
+    is_alert: bool
+    alert_message: str
+
+    model_config = {"from_attributes": True}
+
+
+class UploadResponse(BaseModel):
+    session_id: int
+    status: str
+
+
+class AngleDataPoint(BaseModel):
+    frame: int
+    time: float
+    angle: float
+
+
+class RepBoundaryResponse(BaseModel):
+    rep_number: int
+    start_time: float
+    end_time: float
+
+
+class TimelineResponse(BaseModel):
+    angle_series: list[AngleDataPoint]
+    rep_boundaries: list[RepBoundaryResponse]
