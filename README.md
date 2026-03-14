@@ -1,4 +1,3 @@
-<<<<<<< Updated upstream
 # AIR Health — AI-Powered Rehabilitation & Injury Prevention
 
 **ACM Northeastern 2026 Hackathon**
@@ -33,28 +32,28 @@ AIR Health turns any phone or laptop camera into an intelligent exercise coach:
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│                    React Frontend                     │
-│  Upload Form → Dashboard → Video Player + Charts      │
-│  AI Coach │ Form Quality │ Fatigue Alerts │ Rep Table │
+│                    React Frontend                   │
+│  Upload Form → Dashboard → Video Player + Charts    │
+│ AI Coach │ Form Quality │ Fatigue Alerts │ Rep Table│
 └────────────────────────┬────────────────────────────┘
                          │ REST API (axios)
 ┌────────────────────────┴────────────────────────────┐
-│                  FastAPI Backend                      │
-│                                                      │
+│                  FastAPI Backend                    │
+│                                                     │
 │  ┌──────────────────────────────────────────────┐   │
-│  │            7-Stage Analysis Pipeline           │   │
-│  │                                                │   │
-│  │  1. Pose Extraction (MediaPipe PoseLandmarker)│   │
-│  │  2. Joint Angle Calculation (3D vectors)      │   │
-│  │  3. Rep Segmentation (adaptive peak detect)   │   │
-│  │  4. Feature Extraction (ROM, velocity, etc.)  │   │
-│  │  5. Form Quality Analysis (rule engine)       │   │
-│  │  6. Fatigue Detection (threshold + baseline)  │   │
-│  │  7. AI Coaching Feedback (NLG engine)         │   │
+│  │            7-Stage Analysis Pipeline         │   │
+│  │                                              │   │
+│  │  1. Pose Extraction (MediaPipe PoseLandmarker)   │
+│  │  2. Joint Angle Calculation (3D vectors)     │   │
+│  │  3. Rep Segmentation (adaptive peak detect)  │   │
+│  │  4. Feature Extraction (ROM, velocity, etc.) │   │
+│  │  5. Form Quality Analysis (rule engine)      │   │
+│  │  6. Fatigue Detection (threshold + baseline) │   │
+│  │  7. AI Coaching Feedback (NLG engine)        │   │
 │  └──────────────────────────────────────────────┘   │
-│                                                      │
-│  SQLite (local) ← all data stays on-device           │
-└──────────────────────────────────────────────────────┘
+│                                                     │
+│  SQLite (local) ← all data stays on-device          │
+└─────────────────────────────────────────────────────┘
 ```
 
 ## Tech Stack
@@ -70,7 +69,7 @@ AIR Health turns any phone or laptop camera into an intelligent exercise coach:
 ### Prerequisites
 - Python 3.11+
 - Node.js 18+
-=======
+- 
 # RohanNagpureACMHackathon2
 
 ### Backend
@@ -96,7 +95,6 @@ Open http://localhost:5173 and upload an MP4 exercise video.
 | Arm Raise | Shoulder angle, Elbow angle | Peak detection |
 | Lunge | Left/Right knee, Hip angle | Valley detection (bilateral) |
 | Push-up | Elbow angle, Shoulder angle | Valley detection |
->>>>>>> Stashed changes
 
 ## Privacy & Ethics
 
