@@ -18,6 +18,7 @@ import json
 import os
 from datetime import datetime
 from pathlib import Path
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from core import search, DATA_DIR
 
 
@@ -49,16 +50,21 @@ class DesignSystemGenerator:
             return list(csv.DictReader(f))
 
     def _multi_domain_search(self, query: str, style_priority: list = None) -> dict:
-        """Execute searches across multiple domains."""
-        results = {}
-        for domain, config in SEARCH_CONFIG.items():
+        """Execute searches across multiple domains in parallel."""
+        def search_domain(domain, config):
             if domain == "style" and style_priority:
-                # For style, also search with priority keywords
                 priority_query = " ".join(style_priority[:2]) if style_priority else query
                 combined_query = f"{query} {priority_query}"
-                results[domain] = search(combined_query, domain, config["max_results"])
-            else:
-                results[domain] = search(query, domain, config["max_results"])
+                return domain, search(combined_query, domain, config["max_results"])
+            return domain, search(query, domain, config["max_results"])
+        
+        results = {}
+        with ThreadPoolExecutor(max_workers=len(SEARCH_CONFIG)) as executor:
+            futures = {executor.submit(search_domain, domain, config): domain 
+                      for domain, config in SEARCH_CONFIG.items()}
+            for future in as_completed(futures):
+                domain, result = future.result()
+                results[domain] = result
         return results
 
     def _find_reasoning_rule(self, category: str) -> dict:

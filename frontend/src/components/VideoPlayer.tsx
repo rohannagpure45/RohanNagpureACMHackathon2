@@ -40,6 +40,7 @@ export default function VideoPlayer({
         ref={videoRef}
         src={videoUrl}
         controls
+        crossOrigin="anonymous"
         onTimeUpdate={handleTimeUpdate}
         onSeeking={() => { seekingRef.current = true; }}
         onSeeked={() => { seekingRef.current = false; }}

@@ -9,11 +9,26 @@ import re
 from pathlib import Path
 from math import log
 from collections import defaultdict
+from functools import lru_cache
 
 # ============ CONFIGURATION ============
 DATA_DIR = Path(__file__).parent.parent / "data"
 MAX_RESULTS = 3
 
+# Cache for loaded CSV data and BM25 indices
+_csv_cache = {}
+_bm25_cache = {}
+
+# CSV Schema Format:
+# Each domain config requires:
+#   - file: CSV filename in data/ directory
+#   - search_cols: Columns to index for BM25 search (used for relevance scoring)
+#   - output_cols: Columns to return in search results
+#
+# Required columns per domain:
+# - All CSVs must have a header row
+# - search_cols should contain text-heavy columns for better search relevance
+# - output_cols should include the primary identifier column for each domain
 CSV_CONFIG = {
     "style": {
         "file": "styles.csv",
@@ -104,6 +119,7 @@ class BM25:
         self.avgdl = 0
         self.idf = {}
         self.doc_freqs = defaultdict(int)
+        self.term_freqs = []  # Pre-computed term frequencies per document
         self.N = 0
 
     def tokenize(self, text):
@@ -120,15 +136,20 @@ class BM25:
         self.doc_lengths = [len(doc) for doc in self.corpus]
         self.avgdl = sum(self.doc_lengths) / self.N
 
+        # Pre-compute term frequencies for all documents
+        self.term_freqs = []
         for doc in self.corpus:
             seen = set()
+            tf = defaultdict(int)
             for word in doc:
+                tf[word] += 1
                 if word not in seen:
                     self.doc_freqs[word] += 1
                     seen.add(word)
+            self.term_freqs.append(dict(tf))
 
         for word, freq in self.doc_freqs.items():
-            self.idf[word] = log((self.N - freq + 0.5) / (freq + 0.5) + 1)
+            self.idf[word] = log((self.N - freq + 0.5) / (freq + 0.5))
 
     def score(self, query):
         """Score all documents against query"""
@@ -138,13 +159,11 @@ class BM25:
         for idx, doc in enumerate(self.corpus):
             score = 0
             doc_len = self.doc_lengths[idx]
-            term_freqs = defaultdict(int)
-            for word in doc:
-                term_freqs[word] += 1
+            term_freqs = self.term_freqs[idx]  # Use pre-computed term frequencies
 
             for token in query_tokens:
                 if token in self.idf:
-                    tf = term_freqs[token]
+                    tf = term_freqs.get(token, 0)
                     idf = self.idf[token]
                     numerator = tf * (self.k1 + 1)
                     denominator = tf + self.k1 * (1 - self.b + self.b * doc_len / self.avgdl)
@@ -157,9 +176,30 @@ class BM25:
 
 # ============ SEARCH FUNCTIONS ============
 def _load_csv(filepath):
-    """Load CSV and return list of dicts"""
+    """Load CSV and return list of dicts (with caching)"""
+    filepath_str = str(filepath)
+    if filepath_str in _csv_cache:
+        return _csv_cache[filepath_str]
+    
     with open(filepath, 'r', encoding='utf-8') as f:
-        return list(csv.DictReader(f))
+        data = list(csv.DictReader(f))
+    _csv_cache[filepath_str] = data
+    return data
+
+
+def _get_bm25(filepath, search_cols):
+    """Get or create cached BM25 index for a CSV file"""
+    cache_key = f"{filepath}:{':'.join(search_cols)}"
+    if cache_key in _bm25_cache:
+        return _bm25_cache[cache_key]
+    
+    data = _load_csv(filepath)
+    documents = [" ".join(str(row.get(col, "")) for col in search_cols) for row in data]
+    
+    bm25 = BM25()
+    bm25.fit(documents)
+    _bm25_cache[cache_key] = (bm25, data)
+    return (bm25, data)
 
 
 def _search_csv(filepath, search_cols, output_cols, query, max_results):
@@ -167,17 +207,9 @@ def _search_csv(filepath, search_cols, output_cols, query, max_results):
     if not filepath.exists():
         return []
 
-    data = _load_csv(filepath)
-
-    # Build documents from search columns
-    documents = [" ".join(str(row.get(col, "")) for col in search_cols) for row in data]
-
-    # BM25 search
-    bm25 = BM25()
-    bm25.fit(documents)
+    bm25, data = _get_bm25(filepath, search_cols)
     ranked = bm25.score(query)
 
-    # Get top results with score > 0
     results = []
     for idx, score in ranked[:max_results]:
         if score > 0:
@@ -185,6 +217,13 @@ def _search_csv(filepath, search_cols, output_cols, query, max_results):
             results.append({col: row.get(col, "") for col in output_cols if col in row})
 
     return results
+
+
+def clear_cache():
+    """Clear all caches"""
+    global _csv_cache, _bm25_cache
+    _csv_cache = {}
+    _bm25_cache = {}
 
 
 def detect_domain(query):
