@@ -23,18 +23,43 @@ interface VideoPlayerProps {
   landmarkFrames?: LandmarkFrame[];
 }
 
-function binarySearchNearest(frames: LandmarkFrame[], t: number): LandmarkFrame | null {
+// Interpolate between the two bracketing frames for smooth rendering
+function interpolateFrame(frames: LandmarkFrame[], t: number): LandmarkFrame | null {
   if (!frames.length) return null;
+  if (frames.length === 1) return frames[0];
+
+  // Binary search for first frame with t >= query
   let lo = 0, hi = frames.length - 1;
   while (lo < hi) {
     const mid = (lo + hi) >> 1;
     if (frames[mid].t < t) lo = mid + 1;
     else hi = mid;
   }
-  if (lo > 0 && Math.abs(frames[lo - 1].t - t) < Math.abs(frames[lo].t - t)) {
-    return frames[lo - 1];
-  }
-  return frames[lo];
+
+  // Edge cases: before first or after last frame
+  if (lo === 0) return frames[0];
+  if (lo >= frames.length) return frames[frames.length - 1];
+  // Exact match or very close
+  if (Math.abs(frames[lo].t - t) < 0.001) return frames[lo];
+
+  const before = frames[lo - 1];
+  const after = frames[lo];
+  const span = after.t - before.t;
+  if (span <= 0) return before;
+
+  const alpha = (t - before.t) / span;
+
+  const lm: [number, number, number][] = before.lm.map((bLm, i) => {
+    const aLm = after.lm[i];
+    if (!aLm) return bLm;
+    return [
+      bLm[0] * (1 - alpha) + aLm[0] * alpha,
+      bLm[1] * (1 - alpha) + aLm[1] * alpha,
+      Math.min(bLm[2], aLm[2]), // conservative visibility
+    ] as [number, number, number];
+  });
+
+  return { t, lm };
 }
 
 export default function VideoPlayer({
@@ -48,6 +73,8 @@ export default function VideoPlayer({
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const seekingRef = useRef(false);
+  const rafRef = useRef<number>(0);
+  const smoothedLmRef = useRef<[number, number, number][] | null>(null);
   const [showSkeleton, setShowSkeleton] = useState(true);
   const [duration, setDuration] = useState(1);
 
@@ -83,7 +110,7 @@ export default function VideoPlayer({
     return () => observer.disconnect();
   }, []);
 
-  const drawPose = useCallback((t: number) => {
+  const drawPose = useCallback((t: number, resetSmoothing = false) => {
     const canvas = canvasRef.current;
     const video = videoRef.current;
     if (!canvas || !video || !showSkeleton || !landmarkFrames.length) {
@@ -91,11 +118,28 @@ export default function VideoPlayer({
         const ctx = canvas.getContext('2d');
         ctx?.clearRect(0, 0, canvas.width, canvas.height);
       }
+      smoothedLmRef.current = null;
       return;
     }
 
-    const frame = binarySearchNearest(landmarkFrames, t);
+    const frame = interpolateFrame(landmarkFrames, t);
     if (!frame) return;
+
+    // EMA smoothing: blend with previous rendered positions
+    const SMOOTHING = 0.6;
+    let lm = frame.lm;
+    if (resetSmoothing) {
+      smoothedLmRef.current = null;
+    }
+    const prev = smoothedLmRef.current;
+    if (prev && prev.length === lm.length) {
+      lm = lm.map((cur, i) => [
+        prev[i][0] * (1 - SMOOTHING) + cur[0] * SMOOTHING,
+        prev[i][1] * (1 - SMOOTHING) + cur[1] * SMOOTHING,
+        cur[2], // keep raw visibility for threshold check
+      ] as [number, number, number]);
+    }
+    smoothedLmRef.current = lm;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -109,18 +153,18 @@ export default function VideoPlayer({
       ? cW * (video.videoHeight / video.videoWidth)
       : cH;
 
-    const toScreen = (lm: [number, number, number]): [number, number] => [
-      lm[0] * cW,
-      lm[1] * videoContentH,
+    const toScreen = (pt: [number, number, number]): [number, number] => [
+      pt[0] * cW,
+      pt[1] * videoContentH,
     ];
 
     // Draw connections
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
     ctx.lineWidth = 2;
     for (const [a, b] of POSE_CONNECTIONS) {
-      const lmA = frame.lm[a];
-      const lmB = frame.lm[b];
-      if (!lmA || !lmB || lmA[2] < 0.5 || lmB[2] < 0.5) continue;
+      const lmA = lm[a];
+      const lmB = lm[b];
+      if (!lmA || !lmB || lmA[2] < 0.65 || lmB[2] < 0.65) continue;
       const [ax, ay] = toScreen(lmA);
       const [bx, by] = toScreen(lmB);
       ctx.beginPath();
@@ -131,9 +175,9 @@ export default function VideoPlayer({
 
     // Draw joints
     ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-    for (const lm of frame.lm) {
-      if (lm[2] < 0.5) continue;
-      const [sx, sy] = toScreen(lm);
+    for (const pt of lm) {
+      if (pt[2] < 0.65) continue;
+      const [sx, sy] = toScreen(pt);
       ctx.beginPath();
       ctx.arc(sx, sy, 4, 0, Math.PI * 2);
       ctx.fill();
@@ -141,18 +185,50 @@ export default function VideoPlayer({
   }, [landmarkFrames, showSkeleton]);
 
   const handleTimeUpdate = () => {
-    if (videoRef.current) {
-      if (onTimeUpdate) onTimeUpdate(videoRef.current.currentTime);
-      drawPose(videoRef.current.currentTime);
+    if (videoRef.current && onTimeUpdate) {
+      onTimeUpdate(videoRef.current.currentTime);
     }
   };
 
-  // Redraw when skeleton toggle changes
+  // RAF loop for smooth skeleton rendering
   useEffect(() => {
-    if (videoRef.current) {
-      drawPose(videoRef.current.currentTime);
+    const video = videoRef.current;
+    if (!video) return;
+
+    const loop = () => {
+      if (video.paused || video.ended) return;
+      drawPose(video.currentTime);
+      rafRef.current = requestAnimationFrame(loop);
+    };
+
+    const onPlay = () => {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(loop);
+    };
+
+    const onPauseOrEnd = () => {
+      cancelAnimationFrame(rafRef.current);
+      drawPose(video.currentTime);
+    };
+
+    video.addEventListener('play', onPlay);
+    video.addEventListener('pause', onPauseOrEnd);
+    video.addEventListener('ended', onPauseOrEnd);
+
+    // If already playing when effect runs (e.g. skeleton toggled on mid-play)
+    if (!video.paused && !video.ended) {
+      rafRef.current = requestAnimationFrame(loop);
+    } else {
+      drawPose(video.currentTime, true);
     }
-  }, [showSkeleton, drawPose]);
+
+    return () => {
+      cancelAnimationFrame(rafRef.current);
+      video.removeEventListener('play', onPlay);
+      video.removeEventListener('pause', onPauseOrEnd);
+      video.removeEventListener('ended', onPauseOrEnd);
+    };
+  }, [drawPose]);
 
   return (
     <div className="video-player">
@@ -175,7 +251,7 @@ export default function VideoPlayer({
           onSeeking={() => { seekingRef.current = true; }}
           onSeeked={() => {
             seekingRef.current = false;
-            if (videoRef.current) drawPose(videoRef.current.currentTime);
+            if (videoRef.current) drawPose(videoRef.current.currentTime, true);
           }}
         />
         <canvas ref={canvasRef} className="pose-canvas" />

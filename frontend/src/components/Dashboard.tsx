@@ -37,16 +37,18 @@ export default function Dashboard() {
   const [landmarkFrames, setLandmarkFrames] = useState<LandmarkFrame[]>([]);
 
   useEffect(() => {
-    if (!id) return;
+    if (!id || session?.status !== 'completed') return;
+    
     api
       .get<TimelineData>(`/api/sessions/${id}/timeline`)
       .then((res) => setRepBoundaries(res.data.rep_boundaries))
-      .catch(() => {});
+      .catch((err) => console.error("Failed to load timeline:", err));
+      
     api
       .get<LandmarksData>(`/api/sessions/${id}/landmarks`)
       .then((res) => setLandmarkFrames(JSON.parse(res.data.landmarks_json)))
-      .catch(() => {});
-  }, [id]);
+      .catch((err) => console.error("Failed to load landmarks:", err));
+  }, [id, session?.status]);
 
   const handleRepClick = (repNumber: number) => {
     const boundary = repBoundaries.find((rb) => rb.rep_number === repNumber);
