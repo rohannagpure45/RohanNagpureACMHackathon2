@@ -48,6 +48,8 @@ def generate_session_feedback(
     rom_summary=None,
     progress=None,
     weight_lbs: float | None = None,
+    prev_weight_lbs: float | None = None,
+    max_weight_lbs: float | None = None,
 ) -> SessionFeedback:
     """Generate comprehensive coaching feedback from session data."""
 
@@ -156,6 +158,18 @@ def generate_session_feedback(
 
     # Weight coaching recommendations
     if weight_lbs is not None:
+        if prev_weight_lbs is not None:
+            if weight_lbs == prev_weight_lbs:
+                recommendations.append(
+                    f"Same weight as last session: {weight_lbs:g} lbs."
+                )
+            else:
+                direction = "up" if weight_lbs > prev_weight_lbs else "down"
+                recommendations.append(
+                    f"Last session you used {prev_weight_lbs:g} lbs — {direction} to {weight_lbs:g} lbs this session."
+                )
+        if max_weight_lbs is not None and weight_lbs >= max_weight_lbs:
+            recommendations.append(f"New weight PR at {weight_lbs:g} lbs!")
         if avg_form_score >= 80 and not high_risk_reps and len(fatigue_alerts) == 0:
             recommendations.append(
                 f"Great form at {weight_lbs:g} lbs! Consider progressing to {weight_lbs + 5:g} lbs next session."
@@ -165,6 +179,10 @@ def generate_session_feedback(
                 f"Your form struggled at {weight_lbs:g} lbs. Try dropping to {max(weight_lbs - 5, 5):g} lbs "
                 "to rebuild technique before increasing weight."
             )
+    elif max_weight_lbs is not None:
+        recommendations.append(
+            f"Your best recorded weight for this exercise is {max_weight_lbs:g} lbs — log a weight when you're ready to track progression."
+        )
 
     # Tempo coaching messages
     if tempo_summary is not None:

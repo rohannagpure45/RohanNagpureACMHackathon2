@@ -33,6 +33,7 @@ def update_profile_after_session(
     avg_form_score: float,
     total_reps: int,
     alpha: float = 0.3,
+    weight_lbs: float | None = None,
 ) -> UserExerciseProfile:
     profile = get_or_create_profile(db, user_id, exercise_type)
 
@@ -57,6 +58,9 @@ def update_profile_after_session(
         profile.best_rom = avg_rom
     if profile.best_form_score is None or avg_form_score > profile.best_form_score:
         profile.best_form_score = avg_form_score
+    if weight_lbs is not None:
+        if profile.max_weight_lbs is None or weight_lbs > profile.max_weight_lbs:
+            profile.max_weight_lbs = weight_lbs
 
     # Totals
     profile.total_sessions += 1
@@ -65,6 +69,16 @@ def update_profile_after_session(
     db.commit()
     db.refresh(profile)
     return profile
+
+
+def get_last_session_weight(db: DBSession, user_id: int, exercise_type: str, exclude_session_id: int) -> float | None:
+    s = (db.query(Session)
+         .filter(Session.user_id == user_id, Session.exercise_type == exercise_type,
+                 Session.status == "completed", Session.id != exclude_session_id,
+                 Session.weight_lbs.isnot(None))
+         .order_by(Session.created_at.desc())
+         .first())
+    return s.weight_lbs if s else None
 
 
 def get_user_profiles(db: DBSession, user_id: int) -> list[UserExerciseProfile]:

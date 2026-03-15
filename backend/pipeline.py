@@ -229,7 +229,7 @@ def run_pipeline(db: DBSession, session_id: int, video_path: str, exercise_type:
             avg_rom = sum(r.rom_degrees for r in rep_features) / len(rep_features)
             avg_duration = sum(r.duration_sec for r in rep_features) / len(rep_features)
             try:
-                crud.update_profile_after_session(
+                profile = crud.update_profile_after_session(
                     db,
                     user_id=user_id,
                     exercise_type=exercise_type,
@@ -237,9 +237,21 @@ def run_pipeline(db: DBSession, session_id: int, video_path: str, exercise_type:
                     avg_duration=avg_duration,
                     avg_form_score=avg_form,
                     total_reps=len(rep_features),
+                    weight_lbs=weight_lbs,
                 )
             except Exception as e:
                 logger.warning(f"Profile update failed (non-fatal): {e}")
+
+        # Fetch weight history context for AI coaching
+        prev_weight_lbs = None
+        max_weight_lbs = None
+        try:
+            prev_weight_lbs = crud.get_last_session_weight(db, user_id, exercise_type, session_id)
+            # Re-fetch from DB to get the post-update max_weight_lbs (avoids stale object if update threw)
+            fresh_profile = crud.get_or_create_profile(db, user_id, exercise_type)
+            max_weight_lbs = fresh_profile.max_weight_lbs
+        except Exception as e:
+            logger.warning(f"Weight history fetch failed (non-fatal): {e}")
 
         # ── Stage 7 (final): AI feedback with tempo/ROM/progress context ──
         t6 = time.time()
@@ -253,6 +265,8 @@ def run_pipeline(db: DBSession, session_id: int, video_path: str, exercise_type:
                 rom_summary=rom_summary,
                 progress=progress,
                 weight_lbs=weight_lbs,
+                prev_weight_lbs=prev_weight_lbs,
+                max_weight_lbs=max_weight_lbs,
             )
             crud.create_ai_feedback(
                 db, session_id,

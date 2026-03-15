@@ -75,6 +75,7 @@ def get_exercise_progress(exercise_type: str, db: DBSession = Depends(get_db)):
             avg_rom=avg_rom,
             avg_form_score=avg_form,
             avg_duration=avg_dur,
+            weight_lbs=s.weight_lbs,
         ))
 
     # Return history in chronological order (oldest first) for charts

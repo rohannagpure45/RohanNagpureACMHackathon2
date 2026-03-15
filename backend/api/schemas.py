@@ -113,6 +113,7 @@ class ExerciseProfileResponse(BaseModel):
     baseline_form_score: float | None = None
     best_rom: float | None = None
     best_form_score: float | None = None
+    max_weight_lbs: float | None = None
     total_sessions: int
     total_reps: int
 
@@ -126,6 +127,7 @@ class SessionHistoryPoint(BaseModel):
     avg_rom: float | None = None
     avg_form_score: float | None = None
     avg_duration: float | None = None
+    weight_lbs: float | None = None
 
 
 class ExerciseProgressResponse(BaseModel):
