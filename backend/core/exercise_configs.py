@@ -1,4 +1,4 @@
-"""Exercise configuration definitions for the AIR Health fatigue detection project."""
+"""Exercise configuration definitions for the AIR Health Coach fatigue detection project."""
 
 from dataclasses import dataclass, field
 

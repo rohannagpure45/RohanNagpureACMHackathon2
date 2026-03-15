@@ -1,8 +1,8 @@
-# AI Coach — AI-Powered Rehabilitation & Injury Prevention
+# AIR Health Coach — AI-Powered Rehabilitation & Injury Prevention
 
 **ACM Northeastern 2026 Hackathon**
 
-AIR Health is a privacy-first exercise analysis platform that uses computer vision and AI to detect fatigue, assess form quality, and generate personalized coaching feedback — all processed entirely on your local device. It now tracks progress across sessions to give you personalized baselines, personal bests, and tempo/ROM coaching.
+AIR Health Coach is a privacy-first exercise analysis platform that uses computer vision and AI to detect fatigue, assess form quality, and generate personalized coaching feedback — all processed entirely on your local device. It now tracks progress across sessions to give you personalized baselines, personal bests, and tempo/ROM coaching.
 
 ## The Problem
 
@@ -10,7 +10,7 @@ Every year, **3.5 million youth sports injuries** occur in the US alone. Physica
 
 ## Our Solution
 
-AIR Health turns any phone or laptop camera into an intelligent exercise coach:
+AIR Health Coach turns any phone or laptop camera into an intelligent exercise coach:
 
 1. **Upload** a video of your exercise session
 2. **AI analyzes** your movement using MediaPipe pose estimation (33 body landmarks)
@@ -116,7 +116,7 @@ Open the deployment and upload an MP4 exercise video.
 
 ## Progress Tracking
 
-After each session, AIR Health updates your **exercise profile** using an exponential moving average (EMA, α = 0.3):
+After each session, AIR Health Coach updates your **exercise profile** using an exponential moving average (EMA, α = 0.3):
 
 - **Baseline ROM** — rolling average range of motion
 - **Baseline Form Score** — rolling average form quality
@@ -131,7 +131,7 @@ The `My Progress` page
 
 ## Privacy & Ethics
 
-AIR Health was designed with patient privacy as a core architectural principle:
+AIR Health Coach was designed with patient privacy as a core architectural principle:
 
 - **Zero cloud dependency** — All video processing, pose estimation, and AI analysis happens locally on the user's device. No frames, keypoints, or health data are ever transmitted externally.
 - **Informed consent** — Users must acknowledge the privacy policy before first use.
@@ -142,7 +142,7 @@ AIR Health was designed with patient privacy as a core architectural principle:
 
 ## Scalability Path
 
-While AIR Health currently runs locally, the architecture is designed for scale:
+While AIR Health Coach currently runs locally, the architecture is designed for scale:
 
 - **Edge deployment:** The MediaPipe + FastAPI stack runs on any device with a camera — phones, tablets, kiosks in PT clinics, hospital rehab rooms.
 - **Multi-patient view:** The session/rep/metric data model supports a therapist dashboard where one clinician monitors dozens of patients' home exercise compliance.

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-AIR Health is a privacy-first exercise analysis platform using computer vision and AI for rehabilitation and injury prevention. All processing happens locally — no cloud uploads. Users upload exercise videos, which go through a 10-stage analysis pipeline (pose extraction → rep detection → metrics → form quality → fatigue → AI coaching).
+AIR Health Coach is a privacy-first exercise analysis platform using computer vision and AI for rehabilitation and injury prevention. All processing happens locally — no cloud uploads. Users upload exercise videos, which go through a 10-stage analysis pipeline (pose extraction → rep detection → metrics → form quality → fatigue → AI coaching).
 
 ## Development Commands
 

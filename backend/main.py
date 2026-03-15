@@ -14,7 +14,7 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 
-app = FastAPI(title="AIR Health - Fatigue Detection API")
+app = FastAPI(title="AIR Health Coach - Fatigue Detection API")
 
 app.add_middleware(
     CORSMiddleware,

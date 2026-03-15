@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('AIR Health Dashboard', () => {
+test.describe('AIR Health Coach Dashboard', () => {
   test('home page loads with upload form and session list', async ({ page }) => {
     await page.goto('/');
     await expect(page.getByText('Upload Exercise Video')).toBeVisible();

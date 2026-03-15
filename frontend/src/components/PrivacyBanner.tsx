@@ -26,7 +26,7 @@ export default function PrivacyBanner() {
 
         <div className="privacy-body">
           <p>
-            AIR Health processes exercise videos <strong>entirely on your local device</strong>.
+            AIR Health Coach processes exercise videos <strong>entirely on your local device</strong>.
             Your video data never leaves your computer and is never sent to external servers.
           </p>
           <div className="privacy-features">
@@ -52,7 +52,7 @@ export default function PrivacyBanner() {
             <div className="privacy-policy-detail">
               <h3>How We Protect Your Data</h3>
               <p>
-                <strong>Data Collection:</strong> AIR Health only processes the exercise video you upload.
+                <strong>Data Collection:</strong> AIR Health Coach only processes the exercise video you upload.
                 We extract pose keypoints (skeleton data) for analysis — the raw video frames are not
                 stored after processing.
               </p>
@@ -65,7 +65,7 @@ export default function PrivacyBanner() {
                 video file at any time using the delete button on the session dashboard.
               </p>
               <p>
-                <strong>No Tracking:</strong> AIR Health does not use cookies, analytics, or any form
+                <strong>No Tracking:</strong> AIR Health Coach does not use cookies, analytics, or any form
                 of user tracking.
               </p>
             </div>

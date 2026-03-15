@@ -24,7 +24,7 @@ function HomePage() {
   return (
     <div className="home-page">
       <header className="app-header">
-        <h1 className="app-title">AIR Health</h1>
+        <h1 className="app-title">AIR Health Coach</h1>
         <p className="app-subtitle">AI-Powered Rehabilitation & Injury Prevention</p>
         <div className="app-badges">
           <span className="app-badge badge-local">&#128274; 100% Local Processing</span>
