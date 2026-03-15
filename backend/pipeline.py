@@ -14,6 +14,7 @@ from backend.core.feature_extractor import FeatureExtractor
 from backend.core.fatigue_detector import ThresholdFatigueDetector
 from backend.core.form_analyzer import FormAnalyzer
 from backend.core.ai_feedback import generate_session_feedback
+from backend.core.gemini_feedback import generate_gemini_feedback
 from backend.core.tempo_analyzer import analyze_session_tempo
 from backend.core.rom_analyzer import analyze_session_rom
 from backend.core.progress_tracker import compare_to_baseline
@@ -253,12 +254,14 @@ def run_pipeline(db: DBSession, session_id: int, video_path: str, exercise_type:
         except Exception as e:
             logger.warning(f"Weight history fetch failed (non-fatal): {e}")
 
-        # ── Stage 7 (final): AI feedback with tempo/ROM/progress context ──
+        # ── Stage 7 (final): AI feedback with Gemini vision + fallback ──
         t6 = time.time()
         try:
-            feedback = generate_session_feedback(
+            feedback = generate_gemini_feedback(
+                video_path=video_path,
                 exercise_type=exercise_type,
                 rep_features=rep_features,
+                rep_boundaries=rep_boundaries,
                 fatigue_results=fatigue_results,
                 form_results=form_results,
                 tempo_summary=tempo_summary,
@@ -275,7 +278,7 @@ def run_pipeline(db: DBSession, session_id: int, video_path: str, exercise_type:
                 risk_assessment=feedback.risk_assessment,
                 encouragement=feedback.encouragement,
             )
-            logger.info(f"AI feedback: {time.time() - t6:.1f}s")
+            logger.info(f"AI feedback (Gemini): {time.time() - t6:.1f}s")
         except Exception as e:
             logger.warning(f"AI feedback generation failed (non-fatal): {e}")
 

@@ -1,6 +1,8 @@
+import os
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 DATA_DIR = BASE_DIR / "data"
 VIDEO_DIR = DATA_DIR / "videos"
 UPLOAD_DIR = DATA_DIR / "uploads"
