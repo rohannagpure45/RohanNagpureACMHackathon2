@@ -105,7 +105,7 @@ export default function Dashboard() {
           disabled={deleting}
           title="Permanently delete session and video"
         >
-          {deleting ? 'Deleting...' : '&#128465; Delete'}
+          {deleting ? 'Deleting...' : 'Delete'}
         </button>
       </header>
 

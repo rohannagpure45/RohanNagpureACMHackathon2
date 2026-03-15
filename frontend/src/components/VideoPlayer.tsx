@@ -93,23 +93,6 @@ export default function VideoPlayer({
     }
   }, [videoUrl]);
 
-  // Keep canvas size synced to video element
-  useEffect(() => {
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    if (!video || !canvas) return;
-
-    const sync = () => {
-      canvas.width = video.clientWidth;
-      canvas.height = video.clientHeight;
-    };
-    sync();
-
-    const observer = new ResizeObserver(sync);
-    observer.observe(video);
-    return () => observer.disconnect();
-  }, []);
-
   const drawPose = useCallback((t: number, resetSmoothing = false) => {
     const canvas = canvasRef.current;
     const video = videoRef.current;
@@ -148,14 +131,9 @@ export default function VideoPlayer({
     const cH = canvas.height;
     ctx.clearRect(0, 0, cW, cH);
 
-    // Video content occupies full width; height determined by aspect ratio
-    const videoContentH = video.videoWidth > 0
-      ? cW * (video.videoHeight / video.videoWidth)
-      : cH;
-
     const toScreen = (pt: [number, number, number]): [number, number] => [
       pt[0] * cW,
-      pt[1] * videoContentH,
+      pt[1] * cH,
     ];
 
     // Draw connections
@@ -183,6 +161,32 @@ export default function VideoPlayer({
       ctx.fill();
     }
   }, [landmarkFrames, showSkeleton]);
+
+  // Keep canvas size synced to video element (sub-pixel accurate)
+  useEffect(() => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    if (!video || !canvas) return;
+
+    const sync = () => {
+      const rect = video.getBoundingClientRect();
+      const w = Math.round(rect.width);
+      const h = Math.round(rect.height);
+      canvas.width = w;
+      canvas.height = h;
+      canvas.style.width = w + 'px';
+      canvas.style.height = h + 'px';
+      // Redraw after resize so skeleton isn't blanked
+      if (video.readyState >= 2) {
+        drawPose(video.currentTime);
+      }
+    };
+    sync();
+
+    const observer = new ResizeObserver(sync);
+    observer.observe(video);
+    return () => observer.disconnect();
+  }, [drawPose]);
 
   const handleTimeUpdate = () => {
     if (videoRef.current && onTimeUpdate) {
