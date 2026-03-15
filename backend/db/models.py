@@ -137,6 +137,8 @@ class AIFeedback(Base):
     recommendations = Column(Text, default="[]")  # JSON
     risk_assessment = Column(String, default="low")
     encouragement = Column(Text, default="")
+    gemini_source = Column(Boolean, default=False)
+    progress_note = Column(Text, nullable=True)
 
     session = relationship("Session", back_populates="ai_feedback")
 

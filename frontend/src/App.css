@@ -791,6 +791,42 @@ h1, h2, h3, h4, h5, h6 {
   margin-top: 8px;
 }
 
+.ai-coach-gemini {
+  border: 2px solid rgba(139, 92, 246, 0.4);
+  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.1);
+}
+
+.gemini-badge {
+  background: linear-gradient(135deg, #6366f1, #a855f7, #ec4899);
+  color: white;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.progress-note {
+  margin-bottom: 12px;
+  padding: 12px 14px;
+  background: var(--bg-primary);
+  border-radius: var(--radius);
+  border-left: 3px solid var(--accent);
+}
+
+.progress-note h4 {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.progress-note p {
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.5;
+}
+
 /* ===== Form Quality ===== */
 .form-quality {
   background: var(--bg-card);

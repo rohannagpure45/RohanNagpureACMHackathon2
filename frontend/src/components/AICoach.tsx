@@ -37,10 +37,11 @@ export default function AICoach({ feedback, status }: AICoachProps) {
   };
 
   return (
-    <div className={`ai-coach risk-${feedback.risk_assessment}`}>
+    <div className={`ai-coach ${feedback.gemini_source ? 'ai-coach-gemini' : ''} risk-${feedback.risk_assessment}`}>
       <div className="ai-coach-header" onClick={() => setExpanded(!expanded)}>
         <span className="ai-icon">&#129302;</span>
         <strong>AI Coach Feedback</strong>
+        {feedback.gemini_source && <span className="gemini-badge">✨ Gemini AI</span>}
         <span
           className="risk-badge"
           style={{ backgroundColor: riskColors[feedback.risk_assessment] || 'var(--green)' }}
@@ -58,12 +59,19 @@ export default function AICoach({ feedback, status }: AICoachProps) {
 
           {recommendations.length > 0 && (
             <div className="ai-recommendations">
-              <h4>Recommendations</h4>
+              <h4>Actionable Tips</h4>
               <ul>
                 {recommendations.map((rec, i) => (
                   <li key={i}>{rec}</li>
                 ))}
               </ul>
+            </div>
+          )}
+
+          {feedback.progress_note && (
+            <div className="progress-note">
+              <h4>📈 Progress Context</h4>
+              <p>{feedback.progress_note}</p>
             </div>
           )}
 

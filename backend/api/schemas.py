@@ -89,6 +89,8 @@ class AIFeedbackResponse(BaseModel):
     recommendations: str = "[]"  # JSON string
     risk_assessment: str = "low"
     encouragement: str = ""
+    gemini_source: bool = False
+    progress_note: str | None = None
 
     model_config = {"from_attributes": True}
 

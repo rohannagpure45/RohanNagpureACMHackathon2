@@ -156,33 +156,30 @@ def _extract_key_frames(
 
 
 def _build_system_prompt(exercise_type: str) -> str:
-    """System prompt for Gemini exercise analysis."""
+    """System prompt for Gemini exercise analysis for brief, concise output."""
     return f"""You are an expert exercise coach and sports biomechanics analyst.
 
 You are reviewing key frames extracted from a video of someone performing {exercise_type.replace('_', ' ')}s.
 Each frame is labeled with which rep it's from and its position in the movement (start or peak).
-You also have the full structured metrics from our automated analysis pipeline.
+You also have the full structured metrics from our automated analysis pipeline, including 3D joint landmarks and prior session history.
 
 YOUR JOB:
-1. VALIDATE: Cross-check our automated form scores against what you see. If our heuristics missed
-   something or got something wrong, say so.
-2. DISCOVER: Spot issues that pure joint-angle math CAN'T catch — body alignment, compensatory
-   movements, stance width, grip, head/neck position, weight shift, breathing patterns.
-3. COACH: Generate clear, actionable, encouraging coaching feedback.
+1. Analyze the movement across the frames and metrics.
+2. Provide extremely brief, punchy, actionable coaching feedback. 
 
 GUIDELINES:
-- Be specific: reference rep numbers when noting issues.
-- Be encouraging but honest. Safety always comes first.
-- If image quality is poor or the person is partially occluded, note that rather than guessing.
-- Focus on the most impactful 3-5 recommendations, not an exhaustive list.
+- Keep the summary to 1-2 maximum sentences.
+- Limit recommendations (tips) to the 3 most important points. Keep them short.
+- If they have prior session history, add a brief 1-sentence note comparing this session to past ones (e.g., "ROM improved by 10%").
+- Focus on what the raw angle and landmark metrics CAN'T capture natively (body alignment, stance width, grip).
 
 Return valid JSON with exactly these fields:
 {{
-  "summary": "2-4 sentence overview of the session, referencing what you see",
-  "visual_observations": ["Things you noticed visually that our angle-based metrics missed"],
-  "recommendations": ["Actionable coaching tips, most important first"],
+  "coaching_summary": "1-2 sentence brief takeaway",
+  "tips": ["short tip 1", "short tip 2", "short tip 3"],
+  "progress_note": "1 sentence comparing to prior history (or null if no history)",
   "risk_assessment": "low" | "moderate" | "high",
-  "encouragement": "A motivating closing message"
+  "rep_count_confirmed": "integer (count of reps you clearly see, or the pipeline's count)"
 }}"""
 
 
@@ -191,6 +188,9 @@ def _build_metrics_context(
     rep_features: list[RepFeatures],
     fatigue_results: list[FatigueResult],
     form_results: list[FormResult],
+    rep_boundaries: list[RepBoundary] = None,
+    frame_landmarks: list[Any] = None,
+    session_history: list[Any] = None,
     tempo_summary=None,
     rom_summary=None,
     progress=None,
@@ -202,8 +202,33 @@ def _build_metrics_context(
     num_reps = len(rep_features)
 
     rep_data = []
+    # Identify key frames for landmarks (e.g. at the peak of each rep)
+    # We will compute this simply by taking the landmark data from the frames matching the rep's peak angle.
+    # To keep it simple, we'll map rep to landmarks if frame_landmarks is provided.
+    
+    # Create a quick frame-to-landmark lookup if frame_landmarks is present
+    frame_to_landmarks = {}
+    if frame_landmarks:
+        for fl in frame_landmarks:
+            frame_to_landmarks[fl.frame_number] = fl.landmarks
+
+    # Create lookup of rep_number to peak_frame
+    peak_frames = {}
+    if rep_boundaries:
+        for rb in rep_boundaries:
+            peak_frames[rb.rep_number] = rb.peak_frame
+
+    def _format_lm(lm):
+        if not lm: return None
+        # Support both objects and dicts/lists depending on how they are passed
+        if hasattr(lm, 'x') and hasattr(lm, 'visibility'):
+            return [round(lm.x, 3), round(lm.y, 3), round(lm.visibility, 2)]
+        elif isinstance(lm, (list, tuple)) and len(lm) >= 3:
+            return [round(lm[0], 3), round(lm[1], 3), round(lm[2], 2)]
+        return None
+
     for rf in rep_features:
-        rep_data.append({
+        rep_dict = {
             "rep": rf.rep_number,
             "rom_degrees": round(rf.rom_degrees, 1),
             "duration_sec": round(rf.duration_sec, 2),
@@ -211,7 +236,24 @@ def _build_metrics_context(
             "avg_velocity": round(rf.avg_velocity, 2),
             "smoothness": round(rf.smoothness, 3),
             "symmetry_score": round(rf.symmetry_score, 3) if rf.symmetry_score else None,
-        })
+        }
+        
+        if frame_to_landmarks and rf.rep_number in peak_frames:
+            pf = peak_frames[rf.rep_number]
+            lms = frame_to_landmarks.get(pf)
+            if lms and len(lms) > 28:
+                rep_dict["peak_landmarks"] = {
+                    "L_shoulder": _format_lm(lms[11]),
+                    "R_shoulder": _format_lm(lms[12]),
+                    "L_elbow": _format_lm(lms[13]),
+                    "R_elbow": _format_lm(lms[14]),
+                    "L_hip": _format_lm(lms[23]),
+                    "R_hip": _format_lm(lms[24]),
+                    "L_knee": _format_lm(lms[25]),
+                    "R_knee": _format_lm(lms[26]),
+                }
+                
+        rep_data.append(rep_dict)
 
     form_data = []
     for fr in form_results:
@@ -242,6 +284,17 @@ def _build_metrics_context(
         "form_analysis": form_data,
         "fatigue_alerts": fatigue_data,
     }
+
+    if session_history:
+        history_data = []
+        for s in session_history:
+            history_data.append({
+                "date": str(s.created_at.date()) if s.created_at else "unknown",
+                "reps": s.total_reps,
+                "duration_sec": round(s.duration_sec, 1) if s.duration_sec else None,
+                "weight_lbs": s.weight_lbs,
+            })
+        context["prior_sessions"] = history_data
 
     if tempo_summary is not None:
         context["tempo"] = {
@@ -291,6 +344,8 @@ def generate_gemini_feedback(
     rep_boundaries: list[RepBoundary],
     fatigue_results: list[FatigueResult],
     form_results: list[FormResult],
+    frame_landmarks: list[Any] = None,
+    session_history: list[Any] = None,
     tempo_summary=None,
     rom_summary=None,
     progress=None,
@@ -313,7 +368,7 @@ def generate_gemini_feedback(
     )
 
     if not api_key:
-        logger.info("GEMINI_API_KEY not set — using rule-based feedback")
+        logger.info("GEMINI_API_KEY not set — using rule-based feedback (LLM SKIPPED)")
         return _rule_based_fallback(*fallback_args)
 
     try:
@@ -340,6 +395,9 @@ def generate_gemini_feedback(
             rep_features=rep_features,
             fatigue_results=fatigue_results,
             form_results=form_results,
+            rep_boundaries=rep_boundaries,
+            frame_landmarks=frame_landmarks,
+            session_history=session_history,
             tempo_summary=tempo_summary,
             rom_summary=rom_summary,
             progress=progress,
@@ -379,6 +437,10 @@ def generate_gemini_feedback(
         ))
 
         # ── Call Gemini ──
+        logger.info(f"[LLM INPUT - SYSTEM PROMPT]\n{system_prompt}")
+        logger.info(f"[LLM INPUT - METRICS]\n{metrics_context}")
+        logger.info(f"[LLM INPUT - FRAMES] {len(key_frames)} frames extracted")
+
         t1 = time.time()
         response = client.models.generate_content(
             model=GEMINI_MODEL,
@@ -389,22 +451,21 @@ def generate_gemini_feedback(
             ),
         )
         logger.info(f"Gemini inference: {time.time() - t1:.1f}s")
+        logger.info(f"[LLM OUTPUT - RAW]\n{response.text}")
 
         # ── Parse response ──
         result = json.loads(response.text)
 
         # Merge visual observations into recommendations with a visual marker
-        recommendations = result.get("recommendations", [])
-        visual_obs = result.get("visual_observations", [])
-        if visual_obs:
-            visual_recs = [f"👁️ {obs}" for obs in visual_obs]
-            recommendations = visual_recs + recommendations
+        recommendations = result.get("tips", [])
 
         feedback = SessionFeedback(
-            summary=result.get("summary", "Session analysis complete."),
+            summary=result.get("coaching_summary", "Session analysis complete."),
             recommendations=recommendations,
             risk_assessment=result.get("risk_assessment", "low"),
-            encouragement=result.get("encouragement", "Keep up the great work!"),
+            encouragement="Keep pushing, you're doing great!",
+            gemini_source=True,
+            progress_note=result.get("progress_note")
         )
 
         logger.info(

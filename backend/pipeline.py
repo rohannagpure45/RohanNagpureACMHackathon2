@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 def run_pipeline(db: DBSession, session_id: int, video_path: str, exercise_type: str, user_id: int = 1, weight_lbs: float | None = None):
+    logger.info(f"--- Pipeline Start session={session_id} exercise={exercise_type} ---")
     config = get_config(exercise_type)
     crud.update_session_status(db, session_id, "processing")
 
@@ -111,6 +112,7 @@ def run_pipeline(db: DBSession, session_id: int, video_path: str, exercise_type:
 
         # ── Stage 4: Feature extraction ──
         t3 = time.time()
+        logger.info("Stage 4: Feature extraction start...")
         feat_extractor = FeatureExtractor()
         rep_features = []
 
@@ -159,6 +161,7 @@ def run_pipeline(db: DBSession, session_id: int, video_path: str, exercise_type:
         t5 = time.time()
         form_analyzer = FormAnalyzer(config)
         form_results = []
+        logger.info("Stage 5: Form quality analysis start...")
         for rb in rep_boundaries:
             start_idx = next((i for i, f in enumerate(frame_numbers) if f >= rb.start_frame), 0)
             end_idx = next((i for i, f in enumerate(frame_numbers) if f >= rb.end_frame), len(frame_numbers) - 1)
@@ -184,6 +187,7 @@ def run_pipeline(db: DBSession, session_id: int, video_path: str, exercise_type:
             duration_threshold=config.fatigue_thresholds.get("duration_increase", 0.20),
             symmetry_threshold=config.fatigue_thresholds.get("symmetry_decrease", 0.15),
         )
+        logger.info("Stage 6: Fatigue detection start...")
         fatigue_results = fatigue_detector.analyze_session(rep_features)
 
         for fr in fatigue_results:
@@ -206,16 +210,19 @@ def run_pipeline(db: DBSession, session_id: int, video_path: str, exercise_type:
 
         # ── Stage 8: Tempo analysis ──
         t8 = time.time()
+        logger.info("Stage 8: Tempo analysis start...")
         tempo_summary = analyze_session_tempo(rep_features, config)
         logger.info(f"Tempo analysis: {time.time() - t8:.1f}s")
 
         # ── Stage 9: ROM analysis ──
         t9 = time.time()
+        logger.info("Stage 9: ROM analysis start...")
         rom_summary = analyze_session_rom(rep_features, config)
         logger.info(f"ROM analysis: {time.time() - t9:.1f}s")
 
         # ── Stage 10: Progress comparison ──
         t10 = time.time()
+        logger.info("Stage 10: Progress comparison start...")
         avg_form = sum(fr.form_score for fr in form_results) / max(len(form_results), 1)
         try:
             profile = crud.get_or_create_profile(db, user_id, exercise_type)
@@ -256,7 +263,15 @@ def run_pipeline(db: DBSession, session_id: int, video_path: str, exercise_type:
 
         # ── Stage 7 (final): AI feedback with Gemini vision + fallback ──
         t6 = time.time()
+        
+        session_history = []
         try:
+            session_history = crud.get_user_sessions_for_exercise(db, user_id, exercise_type, limit=5)
+        except Exception as e:
+            logger.warning(f"Failed to fetch session history (non-fatal): {e}")
+
+        try:
+            logger.info("Stage 7 (final): AI feedback generation start...")
             feedback = generate_gemini_feedback(
                 video_path=video_path,
                 exercise_type=exercise_type,
@@ -264,6 +279,8 @@ def run_pipeline(db: DBSession, session_id: int, video_path: str, exercise_type:
                 rep_boundaries=rep_boundaries,
                 fatigue_results=fatigue_results,
                 form_results=form_results,
+                frame_landmarks=frame_landmarks,
+                session_history=session_history,
                 tempo_summary=tempo_summary,
                 rom_summary=rom_summary,
                 progress=progress,
@@ -277,6 +294,8 @@ def run_pipeline(db: DBSession, session_id: int, video_path: str, exercise_type:
                 recommendations=feedback.recommendations_json,
                 risk_assessment=feedback.risk_assessment,
                 encouragement=feedback.encouragement,
+                gemini_source=feedback.gemini_source,
+                progress_note=feedback.progress_note,
             )
             logger.info(f"AI feedback (Gemini): {time.time() - t6:.1f}s")
         except Exception as e:

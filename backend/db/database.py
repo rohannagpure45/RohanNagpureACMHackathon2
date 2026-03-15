@@ -35,6 +35,17 @@ def init_db():
         cols2 = {row[1] for row in conn.execute(text("PRAGMA table_info(user_exercise_profiles)"))}
         if "max_weight_lbs" not in cols2:
             conn.execute(text("ALTER TABLE user_exercise_profiles ADD COLUMN max_weight_lbs REAL"))
+            
+        try:
+            cols3 = {row[1] for row in conn.execute(text("PRAGMA table_info(ai_feedback)"))}
+            if cols3:
+                if "gemini_source" not in cols3:
+                    conn.execute(text("ALTER TABLE ai_feedback ADD COLUMN gemini_source BOOLEAN DEFAULT 0"))
+                if "progress_note" not in cols3:
+                    conn.execute(text("ALTER TABLE ai_feedback ADD COLUMN progress_note TEXT"))
+        except:
+            pass
+            
         conn.commit()
 
     # Ensure default local user exists

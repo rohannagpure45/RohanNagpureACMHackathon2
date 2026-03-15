@@ -58,6 +58,8 @@ export interface AIFeedback {
   recommendations: string; // JSON string
   risk_assessment: string;
   encouragement: string;
+  gemini_source: boolean;
+  progress_note: string | null;
 }
 
 export interface AnglePoint {

@@ -19,6 +19,8 @@ class SessionFeedback:
     recommendations: list[str] = field(default_factory=list)
     risk_assessment: str = "low"
     encouragement: str = ""
+    gemini_source: bool = False
+    progress_note: Optional[str] = None
 
     @property
     def recommendations_json(self) -> str:
