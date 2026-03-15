@@ -28,6 +28,7 @@ AIR Health turns any phone or laptop camera into an intelligent exercise coach:
 | **Tempo Coaching** | Detects too-fast/too-slow reps, inconsistent cadence, and pacing degradation across the set |
 | **ROM Coaching** | Flags partial reps below the exercise's minimum range-of-motion threshold and tracks intra-session decline |
 | **Progress Tracking** | EMA-based rolling baselines, personal bests, and session-over-session trend classification |
+| **Weight Tracking** | Support for logging and tracking weight load across sessions for progressive overload |
 | **AI Coach** | Natural-language session summary with tempo, ROM, and progress context; personalized recommendations; risk assessment |
 | **Privacy-First** | 100% local processing, no cloud uploads, one-click data deletion, HIPAA-aligned design |
 | **Video Sync** | Click any rep in the table to jump to that moment in the video |
@@ -95,15 +96,23 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:5173 and upload an MP4 exercise video.
+Open the deployment and upload an MP4 exercise video.
 
 ## Supported Exercises
 
-| Exercise | Tracked Joints | Detection | Min ROM | Ideal Rep Duration |
-|---|---|---|---|---|
-| Arm Raise | Shoulder angle, Elbow angle | Peak | 60° | 1.5 – 4.0 s |
-| Lunge | Left/Right knee, Hip angle | Valley (bilateral) | 70° | 2.0 – 5.0 s |
-| Push-up | Elbow angle, Shoulder angle | Valley | 50° | 1.0 – 3.5 s |
+| Exercise | Tracked Joints | Detection | Min ROM | Ideal Rep Duration | Weight Tracking |
+|---|---|---|---|---|---|
+| Arm Raise | Shoulder angle, Elbow angle | Peak | 60° | 1.5 – 4.0 s | No |
+| Lunge | Left/Right knee, Hip angle | Valley (bilateral) | 70° | 2.0 – 5.0 s | No |
+| Push-up | Elbow angle, Shoulder angle | Valley | 50° | 1.0 – 3.5 s | No |
+| Bicep Curl | Left/Right elbow, Left shoulder | Valley (bilateral) | 70° | 2.0 – 5.0 s | Yes |
+| Shoulder Press | Left/Right elbow, Left shoulder | Peak (bilateral) | 60° | 2.0 – 5.0 s | Yes |
+| Squat | Left/Right knee, Hip angle | Valley (bilateral) | 60° | 2.0 – 5.0 s | Yes |
+| Deadlift | Hip angle, Left knee | Peak | 50° | 2.5 – 6.0 s | Yes |
+| Lateral Raise | Shoulder angle, Elbow angle | Peak | 55° | 2.0 – 5.0 s | Yes |
+| Lat Pulldown | Left/Right elbow, Left shoulder | Valley (bilateral) | 55° | 2.0 – 5.0 s | Yes |
+| Bent-Over Row | Left/Right elbow, Hip angle | Valley (bilateral) | 45° | 2.0 – 5.0 s | Yes |
+| Seated Cable Row | Left/Right elbow, Left shoulder | Valley (bilateral) | 45° | 2.0 – 5.0 s | Yes |
 
 ## Progress Tracking
 
@@ -112,10 +121,13 @@ After each session, AIR Health updates your **exercise profile** using an expone
 - **Baseline ROM** — rolling average range of motion
 - **Baseline Form Score** — rolling average form quality
 - **Baseline Duration** — rolling average rep pace
-- **Personal Bests** — highest ROM and form score ever recorded
-- **Session History** — last 20 completed sessions per exercise, with per-session averages
+- **Personal Bests** — highest ROM, form score, and max weight ever recorded
+- **Session History** — last 20 completed sessions per exercise, with per-session averages and weight logs
 
-The `My Progress` page (http://localhost:5173/progress) shows exercise cards with your baselines and bests, a Recharts line chart of ROM and form over time, and a session history table with links to individual session dashboards.
+The `My Progress` page
+
+
+ shows exercise cards with your baselines and bests, a Recharts line chart of ROM and form over time, and a session history table with links to individual session dashboards.
 
 ## Privacy & Ethics
 
