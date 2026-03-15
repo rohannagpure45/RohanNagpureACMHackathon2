@@ -247,7 +247,9 @@ def run_pipeline(db: DBSession, session_id: int, video_path: str, exercise_type:
         max_weight_lbs = None
         try:
             prev_weight_lbs = crud.get_last_session_weight(db, user_id, exercise_type, session_id)
-            max_weight_lbs = profile.max_weight_lbs if profile else None
+            # Re-fetch from DB to get the post-update max_weight_lbs (avoids stale object if update threw)
+            fresh_profile = crud.get_or_create_profile(db, user_id, exercise_type)
+            max_weight_lbs = fresh_profile.max_weight_lbs
         except Exception as e:
             logger.warning(f"Weight history fetch failed (non-fatal): {e}")
 

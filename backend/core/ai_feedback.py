@@ -159,11 +159,15 @@ def generate_session_feedback(
     # Weight coaching recommendations
     if weight_lbs is not None:
         if prev_weight_lbs is not None:
-            recommendations.append(
-                f"Last session you used {prev_weight_lbs:g} lbs — "
-                f"{'up' if weight_lbs > prev_weight_lbs else 'down' if weight_lbs < prev_weight_lbs else 'same weight'} "
-                f"to {weight_lbs:g} lbs this session."
-            )
+            if weight_lbs == prev_weight_lbs:
+                recommendations.append(
+                    f"Same weight as last session: {weight_lbs:g} lbs."
+                )
+            else:
+                direction = "up" if weight_lbs > prev_weight_lbs else "down"
+                recommendations.append(
+                    f"Last session you used {prev_weight_lbs:g} lbs — {direction} to {weight_lbs:g} lbs this session."
+                )
         if max_weight_lbs is not None and weight_lbs >= max_weight_lbs:
             recommendations.append(f"New weight PR at {weight_lbs:g} lbs!")
         if avg_form_score >= 80 and not high_risk_reps and len(fatigue_alerts) == 0:
