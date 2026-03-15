@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { ProgressData, ExerciseProgressData } from '../types';
 
-const API_BASE = 'http://localhost:8000/api';
+const API_BASE = `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api`;
 
 export function useProgress() {
   const [data, setData] = useState<ProgressData | null>(null);
