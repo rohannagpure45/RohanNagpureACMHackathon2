@@ -105,13 +105,13 @@ function ExerciseDetail({ exerciseType }: { exerciseType: string }) {
 
       {chartData.length > 0 ? (
         <ResponsiveContainer width="100%" height={260}>
-          <LineChart data={chartData} margin={{ top: 8, right: hasWeightData ? 48 : 16, left: 0, bottom: 8 }}>
+          <LineChart data={chartData} margin={{ top: 8, right: hasWeightData ? 95 : 16, left: 0, bottom: 8 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#DBEAFE" />
             <XAxis dataKey="session" tick={{ fontSize: 12 }} />
             <YAxis yAxisId="rom" orientation="left" tick={{ fontSize: 12 }} label={{ value: 'ROM (°)', angle: -90, position: 'insideLeft', offset: 10, style: { fontSize: 11 } }} />
-            <YAxis yAxisId="form" orientation="right" domain={[0, 100]} tick={{ fontSize: 12 }} label={{ value: 'Form', angle: 90, position: 'insideRight', offset: 10, style: { fontSize: 11 } }} />
+            <YAxis yAxisId="form" orientation="right" width={45} domain={[0, 100]} tick={{ fontSize: 12 }} label={{ value: 'Form', angle: 90, position: 'insideRight', offset: 10, style: { fontSize: 11 } }} />
             {hasWeightData && (
-              <YAxis yAxisId="weight" orientation="right" tick={{ fontSize: 12 }} label={{ value: 'lbs', angle: 90, position: 'insideRight', offset: 36, style: { fontSize: 11 } }} />
+              <YAxis yAxisId="weight" orientation="right" width={50} tick={{ fontSize: 12 }} label={{ value: 'lbs', angle: 90, position: 'insideRight', offset: 10, style: { fontSize: 11 } }} />
             )}
             <Tooltip />
             <Legend />
