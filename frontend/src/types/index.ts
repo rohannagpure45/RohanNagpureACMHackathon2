@@ -6,6 +6,7 @@ export interface Session {
   created_at: string;
   total_reps: number | null;
   duration_sec: number | null;
+  weight_lbs: number | null;
 }
 
 export interface RepMetric {

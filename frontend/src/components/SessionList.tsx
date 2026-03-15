@@ -45,6 +45,7 @@ export default function SessionList() {
             <th>Exercise</th>
             <th>Date</th>
             <th>Reps</th>
+            <th>Weight</th>
             <th>Duration</th>
             <th>Status</th>
           </tr>
@@ -59,6 +60,7 @@ export default function SessionList() {
               <td>{exerciseLabels[s.exercise_type] ?? s.exercise_type}</td>
               <td>{new Date(s.created_at).toLocaleDateString()}</td>
               <td>{s.total_reps ?? '--'}</td>
+              <td>{s.weight_lbs != null ? `${s.weight_lbs} lbs` : '--'}</td>
               <td>{s.duration_sec != null ? formatDuration(s.duration_sec) : '--'}</td>
               <td>
                 <span className={`status-badge status-${s.status}`}>

@@ -52,6 +52,7 @@ class Session(Base):
     total_reps = Column(Integer, default=0)
     duration_sec = Column(Float, default=0.0)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, default=1)
+    weight_lbs = Column(Float, nullable=True)
 
     user = relationship("User", back_populates="sessions")
     reps = relationship("Rep", back_populates="session", cascade="all, delete-orphan")

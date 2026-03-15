@@ -21,10 +21,13 @@ const exerciseTypes = [
   { value: 'seated_cable_row', label: 'Seated Cable Row' },
 ];
 
+const weightedExercises = new Set(['bicep_curl', 'shoulder_press', 'deadlift', 'lateral_raise', 'lat_pulldown', 'bent_over_row', 'seated_cable_row']);
+
 export default function UploadForm() {
   const navigate = useNavigate();
   const [file, setFile] = useState<File | null>(null);
   const [exerciseType, setExerciseType] = useState('arm_raise');
+  const [weight, setWeight] = useState<string>('');
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -55,6 +58,9 @@ export default function UploadForm() {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('exercise_type', exerciseType);
+    if (weight && weightedExercises.has(exerciseType)) {
+      formData.append('weight_lbs', weight);
+    }
 
     try {
       const res = await api.post<UploadResponse>('/api/upload', formData, {
@@ -103,7 +109,10 @@ export default function UploadForm() {
           <span>Exercise Type</span>
           <select
             value={exerciseType}
-            onChange={(e) => setExerciseType(e.target.value)}
+            onChange={(e) => {
+              setExerciseType(e.target.value);
+              if (!weightedExercises.has(e.target.value)) setWeight('');
+            }}
             disabled={uploading}
           >
             {exerciseTypes.map((t) => (
@@ -113,6 +122,21 @@ export default function UploadForm() {
             ))}
           </select>
         </label>
+
+        {weightedExercises.has(exerciseType) && (
+          <label className="exercise-select">
+            <span>Weight (lbs) — optional</span>
+            <input
+              type="number"
+              min="0"
+              step="2.5"
+              placeholder="e.g. 25"
+              value={weight}
+              onChange={(e) => setWeight(e.target.value)}
+              disabled={uploading}
+            />
+          </label>
+        )}
 
         <button
           className="btn btn-primary"

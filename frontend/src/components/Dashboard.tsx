@@ -96,6 +96,7 @@ export default function Dashboard() {
           <div className="session-meta">
             <span className={`status-badge status-${session.status}`}>{session.status}</span>
             {session.total_reps != null && <span>{session.total_reps} reps</span>}
+            {session.weight_lbs != null && <span className="weight-badge">{session.weight_lbs} lbs</span>}
             {session.duration_sec != null && <span>{formatDuration(session.duration_sec)}</span>}
             <span>{new Date(session.created_at).toLocaleString()}</span>
           </div>
