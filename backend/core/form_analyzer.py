@@ -110,6 +110,14 @@ FORM_RULES: dict[str, list[tuple[str, float, float, str, str, str, str]]] = {
         ("right_elbow_angle", 30, 170, "partial_pull",
          "info", "Pull the weight closer to your body for a full contraction", "min"),
     ],
+    "seated_cable_row": [
+        ("left_elbow_angle", 30, 170, "partial_pull",
+         "info", "Pull the cable fully to your torso — elbows should pass your sides at the top of the pull", "min"),
+        ("right_elbow_angle", 30, 170, "partial_pull",
+         "info", "Pull the cable fully to your torso — elbows should pass your sides at the top of the pull", "min"),
+        ("left_shoulder_angle", 20, 160, "leaning_back",
+         "warning", "Avoid leaning too far back — keep your torso upright and drive the movement with your back", "auto"),
+    ],
 }
 
 
