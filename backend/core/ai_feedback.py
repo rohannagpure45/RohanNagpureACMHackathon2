@@ -77,9 +77,9 @@ def generate_session_feedback(
     critical_form = [i for fr in form_results for i in fr.issues if i.severity == "critical"]
 
     # ── Risk assessment ──
-    if high_risk_reps or critical_form:
+    if critical_form or (high_risk_reps and avg_form_score < 70):
         risk = "high"
-    elif len(fatigue_alerts) > num_reps * 0.3 or avg_form_score < 50:
+    elif high_risk_reps or len(fatigue_alerts) > num_reps * 0.3 or avg_form_score < 50:
         risk = "moderate"
     else:
         risk = "low"
@@ -174,7 +174,7 @@ def generate_session_feedback(
             recommendations.append(
                 f"Great form at {weight_lbs:g} lbs! Consider progressing to {weight_lbs + 5:g} lbs next session."
             )
-        elif avg_form_score < 60 or high_risk_reps:
+        elif avg_form_score < 60 or (high_risk_reps and avg_form_score < 70):
             recommendations.append(
                 f"Your form struggled at {weight_lbs:g} lbs. Try dropping to {max(weight_lbs - 5, 5):g} lbs "
                 "to rebuild technique before increasing weight."
