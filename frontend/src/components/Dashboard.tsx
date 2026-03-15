@@ -25,6 +25,7 @@ const exerciseLabels: Record<string, string> = {
   lateral_raise: 'Lateral Raise',
   lat_pulldown: 'Lat Pulldown',
   bent_over_row: 'Bent-Over Row',
+  seated_cable_row: 'Seated Cable Row',
 };
 
 export default function Dashboard() {

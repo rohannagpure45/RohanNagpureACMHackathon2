@@ -18,6 +18,7 @@ const exerciseTypes = [
   { value: 'lateral_raise', label: 'Lateral Raise' },
   { value: 'lat_pulldown', label: 'Lat Pulldown' },
   { value: 'bent_over_row', label: 'Bent-Over Row' },
+  { value: 'seated_cable_row', label: 'Seated Cable Row' },
 ];
 
 export default function UploadForm() {

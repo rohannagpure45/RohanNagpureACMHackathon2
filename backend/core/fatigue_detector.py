@@ -66,19 +66,35 @@ class ThresholdFatigueDetector(BaseFatigueDetector):
         baseline_duration = float(np.median([r.duration_sec for r in rep_features[:n]]))
         baseline_symmetry = float(np.median([r.symmetry_score for r in rep_features[:n]]))
 
+        # If baseline symmetry is ~1.0 (non-bilateral exercise), skip symmetry
+        # and redistribute its weight to ROM and duration.
+        skip_symmetry = abs(baseline_symmetry - 1.0) < 0.05
+
         results = []
         for rep in rep_features:
             rom_dev = self._safe_deviation(rep.rom_degrees, baseline_rom)
             dur_dev = self._safe_deviation(rep.duration_sec, baseline_duration, invert=True)
             sym_dev = self._safe_deviation(rep.symmetry_score, baseline_symmetry)
 
-            # Composite fatigue score (0-1)
-            fatigue_score = float(np.clip(
-                0.40 * max(rom_dev, 0) / max(self.rom_threshold, 1e-6) +
-                0.35 * max(dur_dev, 0) / max(self.duration_threshold, 1e-6) +
-                0.25 * max(sym_dev, 0) / max(self.symmetry_threshold, 1e-6),
-                0.0, 1.0
-            ))
+            # Baseline reps score zero — they define the baseline, not deviate from it
+            if rep.rep_number <= n:
+                fatigue_score = 0.0
+            else:
+                # Dead zone: deviations below threshold contribute zero
+                rom_contrib = max(rom_dev - self.rom_threshold, 0) / max(self.rom_threshold, 1e-6)
+                dur_contrib = max(dur_dev - self.duration_threshold, 0) / max(self.duration_threshold, 1e-6)
+
+                if skip_symmetry:
+                    fatigue_score = float(np.clip(
+                        0.55 * rom_contrib + 0.45 * dur_contrib,
+                        0.0, 1.0
+                    ))
+                else:
+                    sym_contrib = max(sym_dev - self.symmetry_threshold, 0) / max(self.symmetry_threshold, 1e-6)
+                    fatigue_score = float(np.clip(
+                        0.40 * rom_contrib + 0.35 * dur_contrib + 0.25 * sym_contrib,
+                        0.0, 1.0
+                    ))
 
             risk_level = self._classify_risk(fatigue_score)
 

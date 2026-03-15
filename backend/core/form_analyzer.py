@@ -33,81 +33,82 @@ class FormResult:
 
 
 # ── Exercise-specific form rules ──
-# Each rule: (angle_name, min_acceptable, max_acceptable, issue_name, message)
+# Each rule: (angle_name, min_acceptable, max_acceptable, issue_name, severity, message, check_extreme)
+# check_extreme: "max" = check at peak max, "min" = check at peak min, "auto" = check both
 
-FORM_RULES: dict[str, list[tuple[str, float, float, str, str, str]]] = {
+FORM_RULES: dict[str, list[tuple[str, float, float, str, str, str, str]]] = {
     "arm_raise": [
         ("elbow_angle", 150, 180, "bent_elbow",
-         "warning", "Keep your arm straighter during the raise — elbow is bending too much"),
+         "warning", "Keep your arm straighter during the raise — elbow is bending too much", "min"),
         ("shoulder_angle", 0, 180, "insufficient_rom",
-         "info", "Try to raise your arm higher for full range of motion"),
+         "info", "Try to raise your arm higher for full range of motion", "auto"),
     ],
     "lunge": [
         ("left_knee_angle", 70, 110, "knee_too_deep",
-         "warning", "Front knee is bending past safe range — aim for ~90°"),
+         "warning", "Front knee is bending past safe range — aim for ~90°", "min"),
         ("right_knee_angle", 70, 110, "knee_too_deep",
-         "warning", "Back knee angle suggests you may be lunging too deep"),
+         "warning", "Back knee angle suggests you may be lunging too deep", "min"),
         ("hip_angle", 60, 130, "torso_lean",
-         "warning", "Keep your torso more upright — too much forward lean detected"),
+         "warning", "Keep your torso more upright — too much forward lean detected", "min"),
     ],
     "pushup": [
         ("elbow_angle", 60, 170, "elbow_flare",
-         "warning", "Check elbow position — arms may be flaring out too wide"),
-        ("shoulder_angle", 20, 80, "shoulder_impingement",
-         "critical", "Shoulder angle is outside safe range — risk of impingement"),
+         "warning", "Check elbow position — arms may be flaring out too wide", "auto"),
+        ("shoulder_angle", 15, 90, "shoulder_impingement",
+         "critical", "Shoulder angle is outside safe range — risk of impingement", "auto"),
     ],
     # ── Weightlifting exercises ──
     "bicep_curl": [
-        ("left_shoulder_angle", 0, 30, "shoulder_swing",
-         "warning", "Keep your upper arm still — you're swinging the weight with your shoulder"),
-        ("right_shoulder_angle", 0, 30, "shoulder_swing",
-         "warning", "Keep your upper arm still — you're swinging the weight with your shoulder"),
+        ("left_shoulder_angle", 0, 45, "shoulder_swing",
+         "warning", "Keep your upper arm still — you're swinging the weight with your shoulder", "max"),
+        ("right_shoulder_angle", 0, 45, "shoulder_swing",
+         "warning", "Keep your upper arm still — you're swinging the weight with your shoulder", "max"),
         ("left_elbow_angle", 20, 170, "incomplete_curl",
-         "info", "Try to curl the weight higher for a full contraction"),
+         "info", "Try to curl the weight higher for a full contraction", "min"),
     ],
     "shoulder_press": [
         ("left_elbow_angle", 60, 180, "partial_lockout",
-         "info", "Extend your arms fully at the top for complete range of motion"),
+         "info", "Extend your arms fully at the top for complete range of motion", "auto"),
         ("left_shoulder_angle", 140, 180, "insufficient_elevation",
-         "warning", "Press the weight higher — your arms should be nearly overhead"),
+         "warning", "Press the weight higher — your arms should be nearly overhead", "max"),
         ("right_elbow_angle", 60, 180, "partial_lockout",
-         "info", "Extend your arms fully at the top for complete range of motion"),
+         "info", "Extend your arms fully at the top for complete range of motion", "auto"),
     ],
     "squat": [
-        ("left_knee_angle", 60, 170, "squat_too_deep",
-         "warning", "Knees are bending past safe range — don't go below parallel without proper mobility"),
-        ("right_knee_angle", 60, 170, "squat_too_deep",
-         "warning", "Knees are bending past safe range — don't go below parallel without proper mobility"),
-        ("hip_angle", 40, 170, "excessive_forward_lean",
-         "critical", "Too much forward lean — keep your chest up and core tight to protect your lower back"),
+        ("left_knee_angle", 50, 170, "squat_too_deep",
+         "warning", "Knees are bending past safe range — don't go below parallel without proper mobility", "min"),
+        ("right_knee_angle", 50, 170, "squat_too_deep",
+         "warning", "Knees are bending past safe range — don't go below parallel without proper mobility", "min"),
+        ("hip_angle", 30, 170, "excessive_forward_lean",
+         "critical", "Too much forward lean — keep your chest up and core tight to protect your lower back", "min"),
     ],
     "deadlift": [
         ("hip_angle", 40, 180, "rounded_back",
-         "critical", "Hip angle too low — your back may be rounding. Keep a neutral spine throughout"),
+         "critical", "Hip angle too low — your back may be rounding. Keep a neutral spine throughout", "min"),
         ("left_knee_angle", 140, 180, "knee_lockout",
-         "info", "Don't hyperextend your knees at the top — keep a slight bend"),
+         "info", "Don't hyperextend your knees at the top — keep a slight bend", "auto"),
     ],
     "lateral_raise": [
         ("elbow_angle", 140, 180, "bent_elbow",
-         "warning", "Keep your arms straighter — too much elbow bend reduces the shoulder work"),
+         "warning", "Keep your arms straighter — too much elbow bend reduces the shoulder work", "min"),
         ("shoulder_angle", 0, 110, "over_elevation",
-         "warning", "Don't raise above shoulder height — this can strain the rotator cuff"),
+         "warning", "Don't raise above shoulder height — this can strain the rotator cuff", "max"),
     ],
     "lat_pulldown": [
         ("left_shoulder_angle", 20, 160, "leaning_back",
-         "warning", "Don't lean back too far — keep your torso upright and pull with your lats"),
+         "warning", "Don't lean back too far — keep your torso upright and pull with your lats", "auto"),
         ("left_elbow_angle", 30, 170, "partial_pull",
-         "info", "Pull the bar lower for a full contraction — elbows should come to your sides"),
+         "info", "Pull the bar lower for a full contraction — elbows should come to your sides", "min"),
         ("right_elbow_angle", 30, 170, "partial_pull",
-         "info", "Pull the bar lower for a full contraction — elbows should come to your sides"),
+         "info", "Pull the bar lower for a full contraction — elbows should come to your sides", "min"),
     ],
     "bent_over_row": [
         ("hip_angle", 40, 80, "torso_too_upright",
-         "warning", "Hinge forward more at the hips — your torso should be roughly 45° to the floor"),
+         "warning", "Hinge forward more at the hips — your torso should be roughly 45° to the floor", "auto"),
         ("left_elbow_angle", 30, 170, "partial_pull",
-         "info", "Pull the weight closer to your body for a full contraction"),
+         "info", "Pull the weight closer to your body for a full contraction", "min"),
         ("right_elbow_angle", 30, 170, "partial_pull",
-         "info", "Pull the weight closer to your body for a full contraction"),
+         "info", "Pull the weight closer to your body for a full contraction", "min"),
     ],
 }
 
@@ -127,9 +128,11 @@ class FormAnalyzer:
             return FormResult(rep_number=rep_number, form_score=100.0)
 
         issues: list[FormIssue] = []
-        penalty = 0.0
+        # Track max penalty per issue_name to avoid stacking bilateral penalties
+        issue_penalties: dict[str, float] = {}
+        issue_records: dict[str, FormIssue] = {}
 
-        for angle_name, min_val, max_val, issue_name, severity, message in rules:
+        for angle_name, min_val, max_val, issue_name, severity, message, check_extreme in rules:
             # Collect this angle across all frames of the rep
             angle_values = [
                 fa[angle_name] for fa in frame_angles
@@ -138,40 +141,59 @@ class FormAnalyzer:
             if not angle_values:
                 continue
 
-            # Check the extremes (peak of rep is where form matters most)
-            peak_angle = float(np.min(angle_values)) if self.config.rep_direction == "valley" else float(np.max(angle_values))
+            # Use per-rule check_extreme instead of blanket rep_direction
+            if check_extreme == "max":
+                peak_angle = float(np.max(angle_values))
+            elif check_extreme == "min":
+                peak_angle = float(np.min(angle_values))
+            else:  # "auto" — check both extremes
+                min_angle = float(np.min(angle_values))
+                max_angle = float(np.max(angle_values))
+                # Pick whichever extreme is further out of range
+                min_dist = max(min_val - min_angle, 0)
+                max_dist = max(max_angle - max_val, 0)
+                peak_angle = min_angle if min_dist >= max_dist else max_angle
 
             # Also check what % of frames are out of range
             out_of_range = sum(1 for v in angle_values if v < min_val or v > max_val)
             violation_pct = out_of_range / len(angle_values)
 
             if peak_angle < min_val or peak_angle > max_val:
-                issues.append(FormIssue(
+                this_issue = FormIssue(
                     name=issue_name,
                     severity=severity,
                     message=message,
                     angle_name=angle_name,
                     observed_value=round(peak_angle, 1),
                     expected_range=(min_val, max_val),
-                ))
+                )
                 # Penalty scales with severity and how bad the violation is
                 if severity == "critical":
-                    penalty += 25 + (violation_pct * 15)
+                    this_penalty = 25 + (violation_pct * 15)
                 elif severity == "warning":
-                    penalty += 10 + (violation_pct * 10)
+                    this_penalty = 10 + (violation_pct * 10)
                 else:
-                    penalty += 3 + (violation_pct * 5)
+                    this_penalty = 3 + (violation_pct * 5)
+
+                # Deduplicate: keep max penalty per issue_name
+                if issue_name not in issue_penalties or this_penalty > issue_penalties[issue_name]:
+                    issue_penalties[issue_name] = this_penalty
+                    issue_records[issue_name] = this_issue
 
             elif violation_pct > 0.3:
-                # Peak was fine but many frames were out of range
-                issues.append(FormIssue(
+                this_issue = FormIssue(
                     name=issue_name,
                     severity="info",
                     message=f"Intermittent form issue: {message.lower()}",
                     angle_name=angle_name,
-                ))
-                penalty += 5
+                )
+                this_penalty = 5
+                if issue_name not in issue_penalties or this_penalty > issue_penalties[issue_name]:
+                    issue_penalties[issue_name] = this_penalty
+                    issue_records[issue_name] = this_issue
 
+        issues = list(issue_records.values())
+        penalty = sum(issue_penalties.values())
         form_score = max(0.0, min(100.0, 100.0 - penalty))
         return FormResult(
             rep_number=rep_number,

@@ -50,6 +50,7 @@ class FrameLandmarks:
     frame_number: int
     timestamp_sec: float
     landmarks: list[LandmarkPoint]
+    world_landmarks: list[LandmarkPoint] | None = None
 
 
 class PoseExtractor:

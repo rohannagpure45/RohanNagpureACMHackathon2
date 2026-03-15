@@ -76,7 +76,7 @@ def generate_session_feedback(
     # ── Risk assessment ──
     if high_risk_reps or critical_form:
         risk = "high"
-    elif len(fatigue_alerts) > num_reps * 0.3 or avg_form_score < 60:
+    elif len(fatigue_alerts) > num_reps * 0.3 or avg_form_score < 50:
         risk = "moderate"
     else:
         risk = "low"
