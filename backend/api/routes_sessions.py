@@ -10,7 +10,7 @@ from backend.api.schemas import (
     SessionResponse, RepResponse, RepMetricResponse,
     FatigueScoreResponse, TimelineResponse, AngleDataPoint,
     RepBoundaryResponse, FormScoreResponse, AIFeedbackResponse,
-    DeleteResponse,
+    DeleteResponse, LandmarksResponse,
 )
 
 router = APIRouter()
@@ -123,3 +123,14 @@ def get_session_feedback(session_id: int, db: DBSession = Depends(get_db)):
     if not feedback:
         return None
     return feedback
+
+
+@router.get("/sessions/{session_id}/landmarks", response_model=LandmarksResponse)
+def get_session_landmarks(session_id: int, db: DBSession = Depends(get_db)):
+    session = crud.get_session(db, session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    landmarks = crud.get_session_landmarks(db, session_id)
+    if not landmarks:
+        raise HTTPException(status_code=404, detail="Landmarks not yet available")
+    return LandmarksResponse(session_id=session_id, landmarks_json=landmarks.landmarks_json)

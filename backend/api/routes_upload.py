@@ -12,7 +12,7 @@ from backend.pipeline import run_pipeline
 
 router = APIRouter()
 
-ALLOWED_EXERCISES = {"arm_raise", "lunge", "pushup"}
+ALLOWED_EXERCISES = {"arm_raise", "lunge", "pushup", "bicep_curl", "shoulder_press", "squat", "deadlift", "lateral_raise", "lat_pulldown", "bent_over_row"}
 
 
 def _run_pipeline_background(session_id: int, video_path: str, exercise_type: str):

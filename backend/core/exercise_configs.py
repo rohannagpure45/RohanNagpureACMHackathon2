@@ -22,6 +22,9 @@ class ExerciseConfig:
             When set, both left and right angles are combined into one signal.
         fatigue_thresholds: Mapping of metric_name to the threshold value that
             triggers a fatigue alert.
+        ideal_rep_duration_range: (min_sec, max_sec) range for a well-paced rep.
+        uses_weight: Whether the exercise typically involves external weight.
+        min_rom_degrees: Minimum range of motion (degrees) considered a full rep.
     """
 
     name: str
@@ -32,6 +35,9 @@ class ExerciseConfig:
     min_rep_duration_sec: float
     fatigue_thresholds: dict[str, float]
     bilateral_joint: str | None = None
+    ideal_rep_duration_range: tuple[float, float] = (1.5, 4.0)
+    uses_weight: bool = False
+    min_rom_degrees: float = 45.0
 
 
 EXERCISE_CONFIGS: dict[str, ExerciseConfig] = {
@@ -50,6 +56,9 @@ EXERCISE_CONFIGS: dict[str, ExerciseConfig] = {
             "duration_increase": 0.20,
             "symmetry_decrease": 0.15,
         },
+        ideal_rep_duration_range=(1.5, 4.0),
+        uses_weight=False,
+        min_rom_degrees=60.0,
     ),
     "lunge": ExerciseConfig(
         name="lunge",
@@ -68,6 +77,9 @@ EXERCISE_CONFIGS: dict[str, ExerciseConfig] = {
             "duration_increase": 0.20,
             "symmetry_decrease": 0.15,
         },
+        ideal_rep_duration_range=(2.0, 5.0),
+        uses_weight=False,
+        min_rom_degrees=70.0,
     ),
     "pushup": ExerciseConfig(
         name="pushup",
@@ -84,6 +96,153 @@ EXERCISE_CONFIGS: dict[str, ExerciseConfig] = {
             "duration_increase": 0.20,
             "symmetry_decrease": 0.15,
         },
+        ideal_rep_duration_range=(1.0, 3.5),
+        uses_weight=False,
+        min_rom_degrees=50.0,
+    ),
+    # ── Weightlifting exercises ──
+    "bicep_curl": ExerciseConfig(
+        name="bicep_curl",
+        primary_joint="left_elbow_angle",
+        bilateral_joint="right_elbow_angle",
+        landmark_triplets={
+            "left_elbow_angle": (11, 13, 15),
+            "right_elbow_angle": (12, 14, 16),
+            "left_shoulder_angle": (23, 11, 13),
+        },
+        rep_direction="valley",
+        peak_prominence=15,
+        min_rep_duration_sec=1.0,
+        fatigue_thresholds={
+            "rom_decrease": 0.15,
+            "duration_increase": 0.25,
+            "symmetry_decrease": 0.15,
+        },
+        ideal_rep_duration_range=(2.0, 5.0),
+        uses_weight=True,
+        min_rom_degrees=70.0,
+    ),
+    "shoulder_press": ExerciseConfig(
+        name="shoulder_press",
+        primary_joint="left_elbow_angle",
+        bilateral_joint="right_elbow_angle",
+        landmark_triplets={
+            "left_elbow_angle": (11, 13, 15),
+            "right_elbow_angle": (12, 14, 16),
+            "left_shoulder_angle": (23, 11, 15),
+        },
+        rep_direction="peak",
+        peak_prominence=15,
+        min_rep_duration_sec=1.2,
+        fatigue_thresholds={
+            "rom_decrease": 0.15,
+            "duration_increase": 0.20,
+            "symmetry_decrease": 0.15,
+        },
+        ideal_rep_duration_range=(2.0, 5.0),
+        uses_weight=True,
+        min_rom_degrees=60.0,
+    ),
+    "squat": ExerciseConfig(
+        name="squat",
+        primary_joint="left_knee_angle",
+        bilateral_joint="right_knee_angle",
+        landmark_triplets={
+            "left_knee_angle": (23, 25, 27),
+            "right_knee_angle": (24, 26, 28),
+            "hip_angle": (11, 23, 25),
+        },
+        rep_direction="valley",
+        peak_prominence=12,
+        min_rep_duration_sec=1.5,
+        fatigue_thresholds={
+            "rom_decrease": 0.12,
+            "duration_increase": 0.20,
+            "symmetry_decrease": 0.15,
+        },
+        ideal_rep_duration_range=(2.0, 5.0),
+        uses_weight=True,
+        min_rom_degrees=60.0,
+    ),
+    "deadlift": ExerciseConfig(
+        name="deadlift",
+        primary_joint="hip_angle",
+        landmark_triplets={
+            "hip_angle": (11, 23, 25),
+            "left_knee_angle": (23, 25, 27),
+        },
+        rep_direction="peak",
+        peak_prominence=15,
+        min_rep_duration_sec=1.5,
+        fatigue_thresholds={
+            "rom_decrease": 0.12,
+            "duration_increase": 0.25,
+            "symmetry_decrease": 0.15,
+        },
+        ideal_rep_duration_range=(2.5, 6.0),
+        uses_weight=True,
+        min_rom_degrees=50.0,
+    ),
+    "lateral_raise": ExerciseConfig(
+        name="lateral_raise",
+        primary_joint="shoulder_angle",
+        landmark_triplets={
+            "shoulder_angle": (23, 11, 15),
+            "elbow_angle": (11, 13, 15),
+        },
+        rep_direction="peak",
+        peak_prominence=12,
+        min_rep_duration_sec=1.2,
+        fatigue_thresholds={
+            "rom_decrease": 0.15,
+            "duration_increase": 0.20,
+            "symmetry_decrease": 0.15,
+        },
+        ideal_rep_duration_range=(2.0, 5.0),
+        uses_weight=True,
+        min_rom_degrees=55.0,
+    ),
+    "lat_pulldown": ExerciseConfig(
+        name="lat_pulldown",
+        primary_joint="left_elbow_angle",
+        bilateral_joint="right_elbow_angle",
+        landmark_triplets={
+            "left_elbow_angle": (11, 13, 15),
+            "right_elbow_angle": (12, 14, 16),
+            "left_shoulder_angle": (23, 11, 15),
+        },
+        rep_direction="valley",  # Elbows flex as bar is pulled down
+        peak_prominence=14,
+        min_rep_duration_sec=1.2,
+        fatigue_thresholds={
+            "rom_decrease": 0.15,
+            "duration_increase": 0.20,
+            "symmetry_decrease": 0.15,
+        },
+        ideal_rep_duration_range=(2.0, 5.0),
+        uses_weight=True,
+        min_rom_degrees=55.0,
+    ),
+    "bent_over_row": ExerciseConfig(
+        name="bent_over_row",
+        primary_joint="left_elbow_angle",
+        bilateral_joint="right_elbow_angle",
+        landmark_triplets={
+            "left_elbow_angle": (11, 13, 15),
+            "right_elbow_angle": (12, 14, 16),
+            "hip_angle": (11, 23, 25),
+        },
+        rep_direction="valley",
+        peak_prominence=12,
+        min_rep_duration_sec=1.0,
+        fatigue_thresholds={
+            "rom_decrease": 0.15,
+            "duration_increase": 0.20,
+            "symmetry_decrease": 0.15,
+        },
+        ideal_rep_duration_range=(2.0, 5.0),
+        uses_weight=True,
+        min_rom_degrees=45.0,
     ),
 }
 

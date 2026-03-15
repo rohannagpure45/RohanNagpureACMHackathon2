@@ -95,3 +95,51 @@ class AIFeedbackResponse(BaseModel):
 class DeleteResponse(BaseModel):
     success: bool
     message: str
+
+
+class UserResponse(BaseModel):
+    id: int
+    name: str
+    created_at: datetime | None = None
+
+    model_config = {"from_attributes": True}
+
+
+class ExerciseProfileResponse(BaseModel):
+    exercise_type: str
+    baseline_rom: float | None = None
+    baseline_duration: float | None = None
+    baseline_form_score: float | None = None
+    best_rom: float | None = None
+    best_form_score: float | None = None
+    total_sessions: int
+    total_reps: int
+
+    model_config = {"from_attributes": True}
+
+
+class SessionHistoryPoint(BaseModel):
+    session_id: int
+    created_at: datetime | None = None
+    total_reps: int
+    avg_rom: float | None = None
+    avg_form_score: float | None = None
+    avg_duration: float | None = None
+
+
+class ExerciseProgressResponse(BaseModel):
+    exercise_type: str
+    profile: ExerciseProfileResponse | None = None
+    history: list[SessionHistoryPoint]
+
+
+class ProgressResponse(BaseModel):
+    user: UserResponse
+    profiles: list[ExerciseProfileResponse]
+    total_sessions: int
+    total_reps: int
+
+
+class LandmarksResponse(BaseModel):
+    session_id: int
+    landmarks_json: str

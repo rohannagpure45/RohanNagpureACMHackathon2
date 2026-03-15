@@ -1,5 +1,6 @@
-"""Main analysis pipeline: pose → angles → reps → features → form → fatigue → AI feedback."""
+"""Main analysis pipeline: pose → angles → reps → features → form → fatigue → AI feedback → tempo → ROM → progress."""
 
+import json
 import logging
 import time
 
@@ -13,12 +14,15 @@ from backend.core.feature_extractor import FeatureExtractor
 from backend.core.fatigue_detector import ThresholdFatigueDetector
 from backend.core.form_analyzer import FormAnalyzer
 from backend.core.ai_feedback import generate_session_feedback
+from backend.core.tempo_analyzer import analyze_session_tempo
+from backend.core.rom_analyzer import analyze_session_rom
+from backend.core.progress_tracker import compare_to_baseline
 from backend.db import crud
 
 logger = logging.getLogger(__name__)
 
 
-def run_pipeline(db: DBSession, session_id: int, video_path: str, exercise_type: str):
+def run_pipeline(db: DBSession, session_id: int, video_path: str, exercise_type: str, user_id: int = 1):
     config = get_config(exercise_type)
     crud.update_session_status(db, session_id, "processing")
 
@@ -32,6 +36,16 @@ def run_pipeline(db: DBSession, session_id: int, video_path: str, exercise_type:
         if not frame_landmarks:
             crud.update_session_status(db, session_id, "failed")
             return
+
+        # Store landmarks for skeleton overlay
+        try:
+            payload = [
+                {"t": fl.timestamp_sec, "lm": [[lm.x, lm.y, lm.visibility] for lm in fl.landmarks]}
+                for fl in frame_landmarks
+            ]
+            crud.create_session_landmarks(db, session_id, json.dumps(payload))
+        except Exception as e:
+            logger.warning(f"Landmark serialization failed (non-fatal): {e}")
 
         # ── Stage 2: Angle calculation ──
         t1 = time.time()
@@ -56,11 +70,9 @@ def run_pipeline(db: DBSession, session_id: int, video_path: str, exercise_type:
             if bilateral_joint is not None:
                 bilateral_angle = angles.get(bilateral_joint)
                 if bilateral_angle is not None:
-                    # Depending on the exercise, the 'primary' might be left or right.
-                    # We simply need the two sides for symmetry.
                     left_angle = primary_angle
                     right_angle = bilateral_angle
-                    
+
                     if config.rep_direction == "valley":
                         combined_angle = min(primary_angle, bilateral_angle)
                     else:
@@ -68,10 +80,9 @@ def run_pipeline(db: DBSession, session_id: int, video_path: str, exercise_type:
                 else:
                     combined_angle = primary_angle
             else:
-                # If there's no explicitly named bilateral joint, check for "right_" prefix counterpart
                 right_joint_name = "right_" + primary_joint if not primary_joint.startswith("left_") else primary_joint.replace("left_", "right_")
                 left_joint_name = primary_joint if not primary_joint.startswith("right_") else primary_joint.replace("right_", "left_")
-                
+
                 left_angle = angles.get(left_joint_name, primary_angle)
                 right_angle = angles.get(right_joint_name, primary_angle)
 
@@ -188,7 +199,48 @@ def run_pipeline(db: DBSession, session_id: int, video_path: str, exercise_type:
 
         logger.info(f"Fatigue detection: {time.time() - t4:.1f}s")
 
-        # ── Stage 7: AI-generated feedback ──
+        # ── Stage 7: AI-generated feedback (base) ──
+        # Stages 8-10 run first so their messages can be included in feedback
+
+        # ── Stage 8: Tempo analysis ──
+        t8 = time.time()
+        tempo_summary = analyze_session_tempo(rep_features, config)
+        logger.info(f"Tempo analysis: {time.time() - t8:.1f}s")
+
+        # ── Stage 9: ROM analysis ──
+        t9 = time.time()
+        rom_summary = analyze_session_rom(rep_features, config)
+        logger.info(f"ROM analysis: {time.time() - t9:.1f}s")
+
+        # ── Stage 10: Progress comparison ──
+        t10 = time.time()
+        avg_form = sum(fr.form_score for fr in form_results) / max(len(form_results), 1)
+        try:
+            profile = crud.get_or_create_profile(db, user_id, exercise_type)
+            progress = compare_to_baseline(rep_features, avg_form, profile)
+        except Exception as e:
+            logger.warning(f"Progress comparison failed (non-fatal): {e}")
+            progress = compare_to_baseline(rep_features, avg_form, None)
+        logger.info(f"Progress comparison: {time.time() - t10:.1f}s")
+
+        # Update user profile with this session's metrics
+        if rep_features:
+            avg_rom = sum(r.rom_degrees for r in rep_features) / len(rep_features)
+            avg_duration = sum(r.duration_sec for r in rep_features) / len(rep_features)
+            try:
+                crud.update_profile_after_session(
+                    db,
+                    user_id=user_id,
+                    exercise_type=exercise_type,
+                    avg_rom=avg_rom,
+                    avg_duration=avg_duration,
+                    avg_form_score=avg_form,
+                    total_reps=len(rep_features),
+                )
+            except Exception as e:
+                logger.warning(f"Profile update failed (non-fatal): {e}")
+
+        # ── Stage 7 (final): AI feedback with tempo/ROM/progress context ──
         t6 = time.time()
         try:
             feedback = generate_session_feedback(
@@ -196,6 +248,9 @@ def run_pipeline(db: DBSession, session_id: int, video_path: str, exercise_type:
                 rep_features=rep_features,
                 fatigue_results=fatigue_results,
                 form_results=form_results,
+                tempo_summary=tempo_summary,
+                rom_summary=rom_summary,
+                progress=progress,
             )
             crud.create_ai_feedback(
                 db, session_id,

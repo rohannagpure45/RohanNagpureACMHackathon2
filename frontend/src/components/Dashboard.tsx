@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useSession, deleteSession } from '../hooks/useSessionData.ts';
-import type { TimelineData, RepBoundary } from '../types/index.ts';
+import type { TimelineData, RepBoundary, LandmarkFrame, LandmarksData } from '../types/index.ts';
 import VideoPlayer from './VideoPlayer.tsx';
 import FatigueAlert from './FatigueAlert.tsx';
 import DegradationChart from './DegradationChart.tsx';
@@ -18,6 +18,13 @@ const exerciseLabels: Record<string, string> = {
   arm_raise: 'Arm Raise',
   lunge: 'Lunge',
   pushup: 'Push-up',
+  bicep_curl: 'Bicep Curl',
+  shoulder_press: 'Shoulder Press',
+  squat: 'Squat',
+  deadlift: 'Deadlift',
+  lateral_raise: 'Lateral Raise',
+  lat_pulldown: 'Lat Pulldown',
+  bent_over_row: 'Bent-Over Row',
 };
 
 export default function Dashboard() {
@@ -27,12 +34,17 @@ export default function Dashboard() {
   const [repBoundaries, setRepBoundaries] = useState<RepBoundary[]>([]);
   const [currentTime, setCurrentTime] = useState(0);
   const [deleting, setDeleting] = useState(false);
+  const [landmarkFrames, setLandmarkFrames] = useState<LandmarkFrame[]>([]);
 
   useEffect(() => {
     if (!id) return;
     api
       .get<TimelineData>(`/api/sessions/${id}/timeline`)
       .then((res) => setRepBoundaries(res.data.rep_boundaries))
+      .catch(() => {});
+    api
+      .get<LandmarksData>(`/api/sessions/${id}/landmarks`)
+      .then((res) => setLandmarkFrames(JSON.parse(res.data.landmarks_json)))
       .catch(() => {});
   }, [id]);
 
@@ -69,7 +81,7 @@ export default function Dashboard() {
   }
 
   const videoUrl = session.video_path
-    ? `${API_URL}${session.video_path}`
+    ? `${API_URL.replace(/\/$/, '')}/${session.video_path.replace(/^\//, '')}`
     : '';
 
   return (
@@ -113,6 +125,7 @@ export default function Dashboard() {
               repBoundaries={repBoundaries}
               currentTime={currentTime}
               onTimeUpdate={setCurrentTime}
+              landmarkFrames={landmarkFrames}
             />
           )}
           <FormQuality formScores={formScores} />

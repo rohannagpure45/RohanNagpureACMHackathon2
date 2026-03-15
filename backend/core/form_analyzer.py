@@ -56,6 +56,59 @@ FORM_RULES: dict[str, list[tuple[str, float, float, str, str, str]]] = {
         ("shoulder_angle", 20, 80, "shoulder_impingement",
          "critical", "Shoulder angle is outside safe range — risk of impingement"),
     ],
+    # ── Weightlifting exercises ──
+    "bicep_curl": [
+        ("left_shoulder_angle", 0, 30, "shoulder_swing",
+         "warning", "Keep your upper arm still — you're swinging the weight with your shoulder"),
+        ("right_shoulder_angle", 0, 30, "shoulder_swing",
+         "warning", "Keep your upper arm still — you're swinging the weight with your shoulder"),
+        ("left_elbow_angle", 20, 170, "incomplete_curl",
+         "info", "Try to curl the weight higher for a full contraction"),
+    ],
+    "shoulder_press": [
+        ("left_elbow_angle", 60, 180, "partial_lockout",
+         "info", "Extend your arms fully at the top for complete range of motion"),
+        ("left_shoulder_angle", 140, 180, "insufficient_elevation",
+         "warning", "Press the weight higher — your arms should be nearly overhead"),
+        ("right_elbow_angle", 60, 180, "partial_lockout",
+         "info", "Extend your arms fully at the top for complete range of motion"),
+    ],
+    "squat": [
+        ("left_knee_angle", 60, 170, "squat_too_deep",
+         "warning", "Knees are bending past safe range — don't go below parallel without proper mobility"),
+        ("right_knee_angle", 60, 170, "squat_too_deep",
+         "warning", "Knees are bending past safe range — don't go below parallel without proper mobility"),
+        ("hip_angle", 40, 170, "excessive_forward_lean",
+         "critical", "Too much forward lean — keep your chest up and core tight to protect your lower back"),
+    ],
+    "deadlift": [
+        ("hip_angle", 40, 180, "rounded_back",
+         "critical", "Hip angle too low — your back may be rounding. Keep a neutral spine throughout"),
+        ("left_knee_angle", 140, 180, "knee_lockout",
+         "info", "Don't hyperextend your knees at the top — keep a slight bend"),
+    ],
+    "lateral_raise": [
+        ("elbow_angle", 140, 180, "bent_elbow",
+         "warning", "Keep your arms straighter — too much elbow bend reduces the shoulder work"),
+        ("shoulder_angle", 0, 110, "over_elevation",
+         "warning", "Don't raise above shoulder height — this can strain the rotator cuff"),
+    ],
+    "lat_pulldown": [
+        ("left_shoulder_angle", 20, 160, "leaning_back",
+         "warning", "Don't lean back too far — keep your torso upright and pull with your lats"),
+        ("left_elbow_angle", 30, 170, "partial_pull",
+         "info", "Pull the bar lower for a full contraction — elbows should come to your sides"),
+        ("right_elbow_angle", 30, 170, "partial_pull",
+         "info", "Pull the bar lower for a full contraction — elbows should come to your sides"),
+    ],
+    "bent_over_row": [
+        ("hip_angle", 40, 80, "torso_too_upright",
+         "warning", "Hinge forward more at the hips — your torso should be roughly 45° to the floor"),
+        ("left_elbow_angle", 30, 170, "partial_pull",
+         "info", "Pull the weight closer to your body for a full contraction"),
+        ("right_elbow_angle", 30, 170, "partial_pull",
+         "info", "Pull the weight closer to your body for a full contraction"),
+    ],
 }
 
 

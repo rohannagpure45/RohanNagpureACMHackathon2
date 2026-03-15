@@ -6,6 +6,7 @@ Uses rule-based generation locally; can be swapped for LLM API call.
 
 import json
 from dataclasses import dataclass, field
+from typing import Optional
 
 from backend.core.feature_extractor import RepFeatures
 from backend.core.fatigue_detector import FatigueResult
@@ -28,6 +29,13 @@ EXERCISE_NAMES = {
     "arm_raise": "Arm Raises",
     "lunge": "Lunges",
     "pushup": "Push-ups",
+    "bicep_curl": "Bicep Curls",
+    "shoulder_press": "Shoulder Press",
+    "squat": "Squats",
+    "deadlift": "Deadlifts",
+    "lateral_raise": "Lateral Raises",
+    "lat_pulldown": "Lat Pulldowns",
+    "bent_over_row": "Bent-Over Rows",
 }
 
 
@@ -36,6 +44,9 @@ def generate_session_feedback(
     rep_features: list[RepFeatures],
     fatigue_results: list[FatigueResult],
     form_results: list[FormResult],
+    tempo_summary=None,
+    rom_summary=None,
+    progress=None,
 ) -> SessionFeedback:
     """Generate comprehensive coaching feedback from session data."""
 
@@ -57,7 +68,6 @@ def generate_session_feedback(
 
     fatigue_alerts = [f for f in fatigue_results if f.is_alert]
     high_risk_reps = [f for f in fatigue_results if f.risk_level == "high"]
-    avg_fatigue = sum(f.fatigue_score for f in fatigue_results) / max(len(fatigue_results), 1)
 
     form_issues_total = sum(len(fr.issues) for fr in form_results)
     avg_form_score = sum(fr.form_score for fr in form_results) / max(len(form_results), 1)
@@ -94,6 +104,13 @@ def generate_session_feedback(
     else:
         summary_parts.append("No significant fatigue was detected — great endurance!")
 
+    # Append progress highlights to summary
+    if progress is not None:
+        if progress.is_new_rom_best and not progress.is_first_session:
+            summary_parts.append(f"New personal best ROM: {avg_rom:.1f}°!")
+        elif progress.trend == "improving" and not progress.is_first_session:
+            summary_parts.append("You're trending in the right direction — keep it up!")
+
     summary = " ".join(summary_parts)
 
     # ── Build recommendations ──
@@ -124,7 +141,7 @@ def generate_session_feedback(
             "Focus on controlled, smooth movements — jerky reps can strain joints."
         )
 
-    # ROM recommendation
+    # ROM recommendation (from rep features)
     if num_reps >= 3:
         first_rom = rep_features[0].rom_degrees
         last_rom = rep_features[-1].rom_degrees
@@ -134,11 +151,33 @@ def generate_session_feedback(
                 "Try lighter resistance or fewer reps to maintain full ROM."
             )
 
+    # Tempo coaching messages
+    if tempo_summary is not None:
+        for msg in tempo_summary.coaching_messages:
+            recommendations.append(msg)
+
+    # ROM coaching messages
+    if rom_summary is not None:
+        for msg in rom_summary.coaching_messages:
+            recommendations.append(msg)
+
+    # Progress coaching messages
+    if progress is not None:
+        for msg in progress.coaching_messages:
+            recommendations.append(msg)
+
     if not recommendations:
         recommendations.append("Great session! Keep up the consistent form and pacing.")
 
     # ── Encouragement ──
-    if risk == "low" and avg_form_score >= 80:
+    if progress is not None and progress.is_first_session:
+        encouragement = "Excellent first session! Keep it up and you'll be able to track your improvement over time."
+    elif progress is not None and progress.is_new_form_best:
+        encouragement = (
+            f"Personal best form score: {avg_form_score:.1f}/100! "
+            "Your technique is clearly improving — fantastic work!"
+        )
+    elif risk == "low" and avg_form_score >= 80:
         encouragement = (
             "Excellent work! Your form and endurance are looking solid. "
             "Keep challenging yourself with progressive overload."
