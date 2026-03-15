@@ -81,6 +81,13 @@ EXERCISE_ANGLES: dict[str, dict[str, list[tuple[int, int, int]]]] = {
         "hip_angle": [(11, 23, 25)],
         "right_hip_angle": [(12, 24, 26)],
     },
+    "seated_cable_row": {
+        # Primary: elbow flexion while pulling cable toward torso. Valley = fully contracted.
+        "left_elbow_angle": [(11, 13, 15)],
+        "right_elbow_angle": [(12, 14, 16)],
+        # Secondary: hip→shoulder→wrist tracks torso lean and arm elevation
+        "left_shoulder_angle": [(23, 11, 15)],
+    },
 }
 
 
