@@ -1,4 +1,4 @@
-# AIR Health — AI-Powered Rehabilitation & Injury Prevention
+# AI Coach — AI-Powered Rehabilitation & Injury Prevention
 
 **ACM Northeastern 2026 Hackathon**
 
