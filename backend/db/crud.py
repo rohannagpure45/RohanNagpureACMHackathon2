@@ -85,8 +85,8 @@ def get_user_sessions_for_exercise(
 
 # --- Session CRUD ---
 
-def create_session(db: DBSession, video_path: str, exercise_type: str, user_id: int = 1) -> Session:
-    session = Session(video_path=video_path, exercise_type=exercise_type, user_id=user_id)
+def create_session(db: DBSession, video_path: str, exercise_type: str, user_id: int = 1, weight_lbs: float | None = None) -> Session:
+    session = Session(video_path=video_path, exercise_type=exercise_type, user_id=user_id, weight_lbs=weight_lbs)
     db.add(session)
     db.commit()
     db.refresh(session)

@@ -22,7 +22,7 @@ from backend.db import crud
 logger = logging.getLogger(__name__)
 
 
-def run_pipeline(db: DBSession, session_id: int, video_path: str, exercise_type: str, user_id: int = 1):
+def run_pipeline(db: DBSession, session_id: int, video_path: str, exercise_type: str, user_id: int = 1, weight_lbs: float | None = None):
     config = get_config(exercise_type)
     crud.update_session_status(db, session_id, "processing")
 
@@ -59,7 +59,8 @@ def run_pipeline(db: DBSession, session_id: int, video_path: str, exercise_type:
         right_angle_series = [] # Store right angles for symmetry
 
         for fl in frame_landmarks:
-            angles = extract_joint_angles(fl.landmarks, exercise_type)
+            angle_landmarks = fl.world_landmarks if fl.world_landmarks else fl.landmarks
+            angles = extract_joint_angles(angle_landmarks, exercise_type)
             if primary_joint not in angles:
                 continue
 
@@ -251,6 +252,7 @@ def run_pipeline(db: DBSession, session_id: int, video_path: str, exercise_type:
                 tempo_summary=tempo_summary,
                 rom_summary=rom_summary,
                 progress=progress,
+                weight_lbs=weight_lbs,
             )
             crud.create_ai_feedback(
                 db, session_id,

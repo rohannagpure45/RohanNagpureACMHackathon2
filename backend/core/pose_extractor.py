@@ -50,6 +50,7 @@ class FrameLandmarks:
     frame_number: int
     timestamp_sec: float
     landmarks: list[LandmarkPoint]
+    world_landmarks: list[LandmarkPoint] | None = None
 
 
 class PoseExtractor:
@@ -122,11 +123,26 @@ class PoseExtractor:
                             )
                             for i, lm in enumerate(pose_lms)
                         ]
+                        # Extract world landmarks (3D, perspective-independent)
+                        world_points = None
+                        if result.pose_world_landmarks:
+                            world_lms = result.pose_world_landmarks[0]
+                            world_points = [
+                                LandmarkPoint(
+                                    index=i,
+                                    x=lm.x,
+                                    y=lm.y,
+                                    z=lm.z,
+                                    visibility=lm.visibility,
+                                )
+                                for i, lm in enumerate(world_lms)
+                            ]
                         results_list.append(
                             FrameLandmarks(
                                 frame_number=frame_number,
                                 timestamp_sec=frame_number / fps,
                                 landmarks=landmark_points,
+                                world_landmarks=world_points,
                             )
                         )
 

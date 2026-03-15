@@ -47,6 +47,7 @@ def generate_session_feedback(
     tempo_summary=None,
     rom_summary=None,
     progress=None,
+    weight_lbs: float | None = None,
 ) -> SessionFeedback:
     """Generate comprehensive coaching feedback from session data."""
 
@@ -76,13 +77,15 @@ def generate_session_feedback(
     # ── Risk assessment ──
     if high_risk_reps or critical_form:
         risk = "high"
-    elif len(fatigue_alerts) > num_reps * 0.3 or avg_form_score < 60:
+    elif len(fatigue_alerts) > num_reps * 0.3 or avg_form_score < 50:
         risk = "moderate"
     else:
         risk = "low"
 
     # ── Build summary ──
     summary_parts = [f"You completed {num_reps} {exercise_name} reps"]
+    if weight_lbs is not None:
+        summary_parts.append(f"at {weight_lbs:g} lbs")
     if avg_duration > 0:
         total_time = sum(r.duration_sec for r in rep_features)
         summary_parts.append(f"over {total_time:.0f} seconds")
@@ -149,6 +152,18 @@ def generate_session_feedback(
             recommendations.append(
                 "Your range of motion dropped significantly toward the end. "
                 "Try lighter resistance or fewer reps to maintain full ROM."
+            )
+
+    # Weight coaching recommendations
+    if weight_lbs is not None:
+        if avg_form_score >= 80 and not high_risk_reps and len(fatigue_alerts) == 0:
+            recommendations.append(
+                f"Great form at {weight_lbs:g} lbs! Consider progressing to {weight_lbs + 5:g} lbs next session."
+            )
+        elif avg_form_score < 60 or high_risk_reps:
+            recommendations.append(
+                f"Your form struggled at {weight_lbs:g} lbs. Try dropping to {max(weight_lbs - 5, 5):g} lbs "
+                "to rebuild technique before increasing weight."
             )
 
     # Tempo coaching messages

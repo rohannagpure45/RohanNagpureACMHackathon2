@@ -244,6 +244,27 @@ EXERCISE_CONFIGS: dict[str, ExerciseConfig] = {
         uses_weight=True,
         min_rom_degrees=45.0,
     ),
+    "seated_cable_row": ExerciseConfig(
+        name="seated_cable_row",
+        primary_joint="left_elbow_angle",
+        bilateral_joint="right_elbow_angle",
+        landmark_triplets={
+            "left_elbow_angle": (11, 13, 15),
+            "right_elbow_angle": (12, 14, 16),
+            "left_shoulder_angle": (23, 11, 15),
+        },
+        rep_direction="valley",  # Elbows flex as cable is pulled toward torso
+        peak_prominence=12,
+        min_rep_duration_sec=1.0,
+        fatigue_thresholds={
+            "rom_decrease": 0.15,
+            "duration_increase": 0.20,
+            "symmetry_decrease": 0.15,
+        },
+        ideal_rep_duration_range=(2.0, 5.0),
+        uses_weight=True,
+        min_rom_degrees=45.0,
+    ),
 }
 
 

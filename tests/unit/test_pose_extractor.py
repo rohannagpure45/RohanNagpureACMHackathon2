@@ -56,7 +56,7 @@ class TestDataclasses:
 
     def test_frame_landmarks_fields(self):
         names = {f.name for f in fields(FrameLandmarks)}
-        assert names == {"frame_number", "timestamp_sec", "landmarks"}
+        assert names == {"frame_number", "timestamp_sec", "landmarks", "world_landmarks"}
 
     def test_landmark_point_instantiation(self):
         lp = LandmarkPoint(index=0, x=0.1, y=0.2, z=0.3, visibility=0.9)

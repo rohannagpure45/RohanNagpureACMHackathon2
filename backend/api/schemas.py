@@ -10,6 +10,7 @@ class SessionResponse(BaseModel):
     created_at: datetime | None = None
     total_reps: int
     duration_sec: float
+    weight_lbs: float | None = None
 
     model_config = {"from_attributes": True}
 

@@ -25,6 +25,7 @@ const exerciseLabels: Record<string, string> = {
   lateral_raise: 'Lateral Raise',
   lat_pulldown: 'Lat Pulldown',
   bent_over_row: 'Bent-Over Row',
+  seated_cable_row: 'Seated Cable Row',
 };
 
 export default function Dashboard() {
@@ -37,16 +38,18 @@ export default function Dashboard() {
   const [landmarkFrames, setLandmarkFrames] = useState<LandmarkFrame[]>([]);
 
   useEffect(() => {
-    if (!id) return;
+    if (!id || session?.status !== 'completed') return;
+    
     api
       .get<TimelineData>(`/api/sessions/${id}/timeline`)
       .then((res) => setRepBoundaries(res.data.rep_boundaries))
-      .catch(() => {});
+      .catch((err) => console.error("Failed to load timeline:", err));
+      
     api
       .get<LandmarksData>(`/api/sessions/${id}/landmarks`)
       .then((res) => setLandmarkFrames(JSON.parse(res.data.landmarks_json)))
-      .catch(() => {});
-  }, [id]);
+      .catch((err) => console.error("Failed to load landmarks:", err));
+  }, [id, session?.status]);
 
   const handleRepClick = (repNumber: number) => {
     const boundary = repBoundaries.find((rb) => rb.rep_number === repNumber);
@@ -93,6 +96,7 @@ export default function Dashboard() {
           <div className="session-meta">
             <span className={`status-badge status-${session.status}`}>{session.status}</span>
             {session.total_reps != null && <span>{session.total_reps} reps</span>}
+            {session.weight_lbs != null && <span className="weight-badge">{session.weight_lbs} lbs</span>}
             {session.duration_sec != null && <span>{formatDuration(session.duration_sec)}</span>}
             <span>{new Date(session.created_at).toLocaleString()}</span>
           </div>
@@ -103,7 +107,7 @@ export default function Dashboard() {
           disabled={deleting}
           title="Permanently delete session and video"
         >
-          {deleting ? 'Deleting...' : '&#128465; Delete'}
+          {deleting ? 'Deleting...' : 'Delete'}
         </button>
       </header>
 

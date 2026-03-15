@@ -42,7 +42,7 @@ def get_user_progress(db: DBSession = Depends(get_db)):
 
 @router.get("/user/progress/{exercise_type}", response_model=ExerciseProgressResponse)
 def get_exercise_progress(exercise_type: str, db: DBSession = Depends(get_db)):
-    allowed = {"arm_raise", "lunge", "pushup", "bicep_curl", "shoulder_press", "squat", "deadlift", "lateral_raise", "lat_pulldown", "bent_over_row"}
+    allowed = {"arm_raise", "lunge", "pushup", "bicep_curl", "shoulder_press", "squat", "deadlift", "lateral_raise", "lat_pulldown", "bent_over_row", "seated_cable_row"}
     if exercise_type not in allowed:
         raise HTTPException(status_code=422, detail=f"exercise_type must be one of {allowed}")
 

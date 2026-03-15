@@ -12,14 +12,14 @@ from backend.pipeline import run_pipeline
 
 router = APIRouter()
 
-ALLOWED_EXERCISES = {"arm_raise", "lunge", "pushup", "bicep_curl", "shoulder_press", "squat", "deadlift", "lateral_raise", "lat_pulldown", "bent_over_row"}
+ALLOWED_EXERCISES = {"arm_raise", "lunge", "pushup", "bicep_curl", "shoulder_press", "squat", "deadlift", "lateral_raise", "lat_pulldown", "bent_over_row", "seated_cable_row"}
 
 
-def _run_pipeline_background(session_id: int, video_path: str, exercise_type: str):
+def _run_pipeline_background(session_id: int, video_path: str, exercise_type: str, weight_lbs: float | None = None):
     from backend.db.database import SessionLocal
     db = SessionLocal()
     try:
-        run_pipeline(db, session_id, video_path, exercise_type)
+        run_pipeline(db, session_id, video_path, exercise_type, weight_lbs=weight_lbs)
     finally:
         db.close()
 
@@ -29,6 +29,7 @@ async def upload_video(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     exercise_type: str = Form(...),
+    weight_lbs: float | None = Form(None),
     db: DBSession = Depends(get_db),
 ):
     if exercise_type not in ALLOWED_EXERCISES:
@@ -44,9 +45,9 @@ async def upload_video(
 
     # Store relative path so frontend can construct URL as /uploads/{filename}
     relative_path = f"uploads/{file.filename}"
-    session = crud.create_session(db, relative_path, exercise_type)
+    session = crud.create_session(db, relative_path, exercise_type, weight_lbs=weight_lbs)
 
     # Run pipeline in background
-    background_tasks.add_task(_run_pipeline_background, session.id, str(save_path), exercise_type)
+    background_tasks.add_task(_run_pipeline_background, session.id, str(save_path), exercise_type, weight_lbs)
 
     return UploadResponse(session_id=session.id, status="pending")
