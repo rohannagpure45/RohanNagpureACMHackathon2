@@ -58,6 +58,7 @@ class Session(Base):
     fatigue_scores = relationship("FatigueScore", back_populates="session", cascade="all, delete-orphan")
     form_scores = relationship("FormScore", back_populates="session", cascade="all, delete-orphan")
     ai_feedback = relationship("AIFeedback", back_populates="session", cascade="all, delete-orphan", uselist=False)
+    pose_landmarks = relationship("SessionPoseLandmarks", back_populates="session", cascade="all, delete-orphan", uselist=False)
 
 
 class Rep(Base):
@@ -134,3 +135,13 @@ class AIFeedback(Base):
     encouragement = Column(Text, default="")
 
     session = relationship("Session", back_populates="ai_feedback")
+
+
+class SessionPoseLandmarks(Base):
+    __tablename__ = "session_pose_landmarks"
+
+    id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(Integer, ForeignKey("sessions.id"), nullable=False, unique=True)
+    landmarks_json = Column(Text, nullable=False)
+
+    session = relationship("Session", back_populates="pose_landmarks")

@@ -138,3 +138,8 @@ class ProgressResponse(BaseModel):
     profiles: list[ExerciseProfileResponse]
     total_sessions: int
     total_reps: int
+
+
+class LandmarksResponse(BaseModel):
+    session_id: int
+    landmarks_json: str

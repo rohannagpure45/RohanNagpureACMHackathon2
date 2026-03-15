@@ -1,5 +1,6 @@
 """Main analysis pipeline: pose → angles → reps → features → form → fatigue → AI feedback → tempo → ROM → progress."""
 
+import json
 import logging
 import time
 
@@ -35,6 +36,16 @@ def run_pipeline(db: DBSession, session_id: int, video_path: str, exercise_type:
         if not frame_landmarks:
             crud.update_session_status(db, session_id, "failed")
             return
+
+        # Store landmarks for skeleton overlay
+        try:
+            payload = [
+                {"t": fl.timestamp_sec, "lm": [[lm.x, lm.y, lm.visibility] for lm in fl.landmarks]}
+                for fl in frame_landmarks
+            ]
+            crud.create_session_landmarks(db, session_id, json.dumps(payload))
+        except Exception as e:
+            logger.warning(f"Landmark serialization failed (non-fatal): {e}")
 
         # ── Stage 2: Angle calculation ──
         t1 = time.time()

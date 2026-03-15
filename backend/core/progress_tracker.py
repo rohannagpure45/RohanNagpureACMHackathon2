@@ -12,6 +12,7 @@ class ProgressComparison:
     form_change_pct: Optional[float]     # % change vs EMA baseline
     is_new_rom_best: bool
     is_new_form_best: bool
+    is_first_session: bool
     trend: str                            # "improving", "stable", "declining"
     coaching_messages: list[str] = field(default_factory=list)
 
@@ -29,6 +30,7 @@ def compare_to_baseline(
             form_change_pct=None,
             is_new_rom_best=False,
             is_new_form_best=False,
+            is_first_session=False,
             trend="stable",
         )
 
@@ -41,9 +43,12 @@ def compare_to_baseline(
             form_change_pct=None,
             is_new_rom_best=True,
             is_new_form_best=True,
+            is_first_session=True,
             trend="stable",
-            coaching_messages=["This is your first recorded session — your baseline has been set!"],
+            coaching_messages=["Great first session — your baseline has been set!"],
         )
+
+    is_first_session = profile.total_sessions == 0
 
     # Compute % changes vs EMA baselines
     rom_change = None
@@ -78,7 +83,9 @@ def compare_to_baseline(
 
     messages = []
 
-    if is_new_rom_best:
+    if is_first_session:
+        messages.append("Great first session — your baseline has been set!")
+    elif is_new_rom_best:
         messages.append(f"New personal best range of motion: {avg_rom:.1f}°! Keep it up!")
     elif rom_change is not None:
         if rom_change >= 5:
@@ -89,7 +96,7 @@ def compare_to_baseline(
                 "Make sure you're warmed up and not rushing the reps."
             )
 
-    if is_new_form_best:
+    if is_new_form_best and not is_first_session:
         messages.append(f"Best form score yet: {form_score:.1f}/100! Your technique is improving.")
     elif form_change is not None:
         if form_change >= 5:
@@ -113,6 +120,7 @@ def compare_to_baseline(
         form_change_pct=form_change,
         is_new_rom_best=is_new_rom_best,
         is_new_form_best=is_new_form_best,
+        is_first_session=is_first_session,
         trend=trend,
         coaching_messages=messages,
     )

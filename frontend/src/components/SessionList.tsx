@@ -6,6 +6,13 @@ const exerciseLabels: Record<string, string> = {
   arm_raise: 'Arm Raise',
   lunge: 'Lunge',
   pushup: 'Push-up',
+  bicep_curl: 'Bicep Curl',
+  shoulder_press: 'Shoulder Press',
+  squat: 'Squat',
+  deadlift: 'Deadlift',
+  lateral_raise: 'Lateral Raise',
+  lat_pulldown: 'Lat Pulldown',
+  bent_over_row: 'Bent-Over Row',
 };
 
 export default function SessionList() {

@@ -1,7 +1,7 @@
 import datetime
 
 from sqlalchemy.orm import Session as DBSession
-from backend.db.models import Session, Rep, RepMetric, FatigueScore, FormScore, AIFeedback, User, UserExerciseProfile
+from backend.db.models import Session, Rep, RepMetric, FatigueScore, FormScore, AIFeedback, User, UserExerciseProfile, SessionPoseLandmarks
 
 
 # --- User CRUD ---
@@ -190,4 +190,20 @@ def create_ai_feedback(db: DBSession, session_id: int, **kwargs) -> AIFeedback:
 def get_ai_feedback(db: DBSession, session_id: int) -> AIFeedback | None:
     return db.query(AIFeedback).filter(
         AIFeedback.session_id == session_id
+    ).first()
+
+
+# --- SessionPoseLandmarks CRUD ---
+
+def create_session_landmarks(db: DBSession, session_id: int, landmarks_json: str) -> SessionPoseLandmarks:
+    row = SessionPoseLandmarks(session_id=session_id, landmarks_json=landmarks_json)
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def get_session_landmarks(db: DBSession, session_id: int) -> SessionPoseLandmarks | None:
+    return db.query(SessionPoseLandmarks).filter(
+        SessionPoseLandmarks.session_id == session_id
     ).first()

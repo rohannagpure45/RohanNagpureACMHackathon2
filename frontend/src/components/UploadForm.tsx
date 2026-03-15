@@ -11,6 +11,13 @@ const exerciseTypes = [
   { value: 'arm_raise', label: 'Arm Raise' },
   { value: 'lunge', label: 'Lunge' },
   { value: 'pushup', label: 'Push-up' },
+  { value: 'bicep_curl', label: 'Bicep Curl' },
+  { value: 'shoulder_press', label: 'Shoulder Press' },
+  { value: 'squat', label: 'Squat' },
+  { value: 'deadlift', label: 'Deadlift' },
+  { value: 'lateral_raise', label: 'Lateral Raise' },
+  { value: 'lat_pulldown', label: 'Lat Pulldown' },
+  { value: 'bent_over_row', label: 'Bent-Over Row' },
 ];
 
 export default function UploadForm() {

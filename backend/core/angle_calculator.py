@@ -24,6 +24,63 @@ EXERCISE_ANGLES: dict[str, dict[str, list[tuple[int, int, int]]]] = {
         "shoulder_angle": [(13, 11, 23)],
         "right_shoulder_angle": [(14, 12, 24)],
     },
+    # ── Weightlifting exercises ──
+    "bicep_curl": {
+        # Primary: elbow flexion (shoulder→elbow→wrist). Valley = top of curl.
+        "left_elbow_angle": [(11, 13, 15)],
+        "right_elbow_angle": [(12, 14, 16)],
+        # Secondary: shoulder should stay relatively still (no swinging)
+        "left_shoulder_angle": [(23, 11, 13)],
+        "right_shoulder_angle": [(24, 12, 14)],
+    },
+    "shoulder_press": {
+        # Primary: elbow extension overhead (shoulder→elbow→wrist). Peak = lockout.
+        "left_elbow_angle": [(11, 13, 15)],
+        "right_elbow_angle": [(12, 14, 16)],
+        # Secondary: arm elevation (hip→shoulder→wrist)
+        "left_shoulder_angle": [(23, 11, 15)],
+        "right_shoulder_angle": [(24, 12, 16)],
+    },
+    "squat": {
+        # Primary: knee flexion. Valley = bottom of squat.
+        "left_knee_angle": [(23, 25, 27)],
+        "right_knee_angle": [(24, 26, 28)],
+        # Secondary: hip angle for torso lean check
+        "hip_angle": [(11, 23, 25)],
+        "right_hip_angle": [(12, 24, 26)],
+    },
+    "deadlift": {
+        # Primary: hip hinge (shoulder→hip→knee). Valley = bottom, peak = lockout.
+        "hip_angle": [(11, 23, 25)],
+        "right_hip_angle": [(12, 24, 26)],
+        # Secondary: knee should have slight bend
+        "left_knee_angle": [(23, 25, 27)],
+        "right_knee_angle": [(24, 26, 28)],
+    },
+    "lateral_raise": {
+        # Primary: shoulder abduction (hip→shoulder→wrist). Peak = arms out.
+        "shoulder_angle": [(23, 11, 15)],
+        "right_shoulder_angle": [(24, 12, 16)],
+        # Secondary: elbows should stay slightly bent, not locked
+        "elbow_angle": [(11, 13, 15)],
+        "right_elbow_angle": [(12, 14, 16)],
+    },
+    "lat_pulldown": {
+        # Primary: elbow flexion on the pull. Valley = arms pulled down.
+        "left_elbow_angle": [(11, 13, 15)],
+        "right_elbow_angle": [(12, 14, 16)],
+        # Secondary: shoulder adduction (hip→shoulder→wrist narrows on pull)
+        "left_shoulder_angle": [(23, 11, 15)],
+        "right_shoulder_angle": [(24, 12, 16)],
+    },
+    "bent_over_row": {
+        # Primary: elbow flexion while hinged. Valley = arms extended, rep on pull.
+        "left_elbow_angle": [(11, 13, 15)],
+        "right_elbow_angle": [(12, 14, 16)],
+        # Secondary: hip hinge should stay constant (~45-70°)
+        "hip_angle": [(11, 23, 25)],
+        "right_hip_angle": [(12, 24, 26)],
+    },
 }
 
 
@@ -68,7 +125,7 @@ def extract_joint_angles(
         Indexed by MediaPipe landmark index (0-32).  Each element must
         expose ``.x``, ``.y``, ``.z``, and ideally ``.visibility`` attributes.
     exercise_type : str
-        One of ``"arm_raise"``, ``"lunge"``, ``"pushup"``.
+        Key into ``EXERCISE_ANGLES`` (e.g. ``"arm_raise"``, ``"squat"``, ``"bicep_curl"``).
 
     Returns
     -------

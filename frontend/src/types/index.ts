@@ -119,3 +119,13 @@ export interface ExerciseProgressData {
   profile: ExerciseProfile | null;
   history: SessionHistoryPoint[];
 }
+
+export interface LandmarkFrame {
+  t: number;
+  lm: [number, number, number][]; // [x, y, visibility] per landmark
+}
+
+export interface LandmarksData {
+  session_id: number;
+  landmarks_json: string;
+}

@@ -29,6 +29,13 @@ EXERCISE_NAMES = {
     "arm_raise": "Arm Raises",
     "lunge": "Lunges",
     "pushup": "Push-ups",
+    "bicep_curl": "Bicep Curls",
+    "shoulder_press": "Shoulder Press",
+    "squat": "Squats",
+    "deadlift": "Deadlifts",
+    "lateral_raise": "Lateral Raises",
+    "lat_pulldown": "Lat Pulldowns",
+    "bent_over_row": "Bent-Over Rows",
 }
 
 
@@ -99,9 +106,9 @@ def generate_session_feedback(
 
     # Append progress highlights to summary
     if progress is not None:
-        if progress.is_new_rom_best:
+        if progress.is_new_rom_best and not progress.is_first_session:
             summary_parts.append(f"New personal best ROM: {avg_rom:.1f}°!")
-        elif progress.trend == "improving":
+        elif progress.trend == "improving" and not progress.is_first_session:
             summary_parts.append("You're trending in the right direction — keep it up!")
 
     summary = " ".join(summary_parts)
@@ -163,7 +170,9 @@ def generate_session_feedback(
         recommendations.append("Great session! Keep up the consistent form and pacing.")
 
     # ── Encouragement ──
-    if progress is not None and progress.is_new_form_best:
+    if progress is not None and progress.is_first_session:
+        encouragement = "Excellent first session! Keep it up and you'll be able to track your improvement over time."
+    elif progress is not None and progress.is_new_form_best:
         encouragement = (
             f"Personal best form score: {avg_form_score:.1f}/100! "
             "Your technique is clearly improving — fantastic work!"
