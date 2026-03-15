@@ -95,6 +95,7 @@ export interface ExerciseProfile {
   baseline_form_score: number | null;
   best_rom: number | null;
   best_form_score: number | null;
+  max_weight_lbs: number | null;
   total_sessions: number;
   total_reps: number;
 }
@@ -113,6 +114,7 @@ export interface SessionHistoryPoint {
   avg_rom: number | null;
   avg_form_score: number | null;
   avg_duration: number | null;
+  weight_lbs: number | null;
 }
 
 export interface ExerciseProgressData {

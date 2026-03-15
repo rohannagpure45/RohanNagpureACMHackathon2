@@ -1,6 +1,6 @@
 import logging
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, DeclarativeBase
 
 from backend.config import DATABASE_URL
@@ -26,6 +26,16 @@ def get_db():
 def init_db():
     from backend.db.models import Session, Rep, RepMetric, FatigueScore, FormScore, AIFeedback, User, UserExerciseProfile  # noqa: F401
     Base.metadata.create_all(bind=engine)
+
+    # SQLite column migrations (create_all never alters existing tables)
+    with engine.connect() as conn:
+        cols = {row[1] for row in conn.execute(text("PRAGMA table_info(sessions)"))}
+        if "weight_lbs" not in cols:
+            conn.execute(text("ALTER TABLE sessions ADD COLUMN weight_lbs REAL"))
+        cols2 = {row[1] for row in conn.execute(text("PRAGMA table_info(user_exercise_profiles)"))}
+        if "max_weight_lbs" not in cols2:
+            conn.execute(text("ALTER TABLE user_exercise_profiles ADD COLUMN max_weight_lbs REAL"))
+        conn.commit()
 
     # Ensure default local user exists
     db = SessionLocal()

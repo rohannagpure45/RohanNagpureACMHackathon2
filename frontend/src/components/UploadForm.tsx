@@ -21,7 +21,7 @@ const exerciseTypes = [
   { value: 'seated_cable_row', label: 'Seated Cable Row' },
 ];
 
-const weightedExercises = new Set(['bicep_curl', 'shoulder_press', 'deadlift', 'lateral_raise', 'lat_pulldown', 'bent_over_row', 'seated_cable_row']);
+const weightedExercises = new Set(['bicep_curl', 'shoulder_press', 'squat', 'deadlift', 'lateral_raise', 'lat_pulldown', 'bent_over_row', 'seated_cable_row']);
 
 export default function UploadForm() {
   const navigate = useNavigate();

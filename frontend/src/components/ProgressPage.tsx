@@ -10,6 +10,14 @@ const EXERCISE_LABELS: Record<string, string> = {
   arm_raise: 'Arm Raises',
   lunge: 'Lunges',
   pushup: 'Push-ups',
+  bicep_curl: 'Bicep Curls',
+  shoulder_press: 'Shoulder Press',
+  squat: 'Squats',
+  deadlift: 'Deadlifts',
+  lateral_raise: 'Lateral Raises',
+  lat_pulldown: 'Lat Pulldowns',
+  bent_over_row: 'Bent-Over Rows',
+  seated_cable_row: 'Seated Cable Rows',
 };
 
 function ExerciseCard({
@@ -64,6 +72,12 @@ function ExerciseCard({
             <span className="metric-value">{profile.best_form_score.toFixed(1)}</span>
           </div>
         )}
+        {profile.max_weight_lbs != null && (
+          <div className="metric-item">
+            <span className="metric-label">Max Weight</span>
+            <span className="metric-value">{profile.max_weight_lbs} lbs</span>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -77,10 +91,12 @@ function ExerciseDetail({ exerciseType }: { exerciseType: string }) {
   if (error) return <div className="progress-error">Error: {error}</div>;
   if (!data) return null;
 
+  const hasWeightData = data.history.some((h) => h.weight_lbs != null);
   const chartData = data.history.map((h, i) => ({
     session: `S${i + 1}`,
     rom: h.avg_rom != null ? Math.round(h.avg_rom * 10) / 10 : null,
     form: h.avg_form_score != null ? Math.round(h.avg_form_score * 10) / 10 : null,
+    weight: h.weight_lbs != null ? h.weight_lbs : null,
   }));
 
   return (
@@ -89,15 +105,21 @@ function ExerciseDetail({ exerciseType }: { exerciseType: string }) {
 
       {chartData.length > 0 ? (
         <ResponsiveContainer width="100%" height={260}>
-          <LineChart data={chartData} margin={{ top: 8, right: 16, left: 0, bottom: 8 }}>
+          <LineChart data={chartData} margin={{ top: 8, right: hasWeightData ? 48 : 16, left: 0, bottom: 8 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#DBEAFE" />
             <XAxis dataKey="session" tick={{ fontSize: 12 }} />
             <YAxis yAxisId="rom" orientation="left" tick={{ fontSize: 12 }} label={{ value: 'ROM (°)', angle: -90, position: 'insideLeft', offset: 10, style: { fontSize: 11 } }} />
             <YAxis yAxisId="form" orientation="right" domain={[0, 100]} tick={{ fontSize: 12 }} label={{ value: 'Form', angle: 90, position: 'insideRight', offset: 10, style: { fontSize: 11 } }} />
+            {hasWeightData && (
+              <YAxis yAxisId="weight" orientation="right" tick={{ fontSize: 12 }} label={{ value: 'lbs', angle: 90, position: 'insideRight', offset: 36, style: { fontSize: 11 } }} />
+            )}
             <Tooltip />
             <Legend />
             <Line yAxisId="rom" type="monotone" dataKey="rom" name="Avg ROM (°)" stroke="#2563EB" strokeWidth={2} dot={{ r: 4 }} connectNulls />
             <Line yAxisId="form" type="monotone" dataKey="form" name="Form Score" stroke="#F97316" strokeWidth={2} dot={{ r: 4 }} connectNulls />
+            {hasWeightData && (
+              <Line yAxisId="weight" type="monotone" dataKey="weight" name="Weight (lbs)" stroke="#10B981" strokeWidth={2} dot={{ r: 4 }} connectNulls />
+            )}
           </LineChart>
         </ResponsiveContainer>
       ) : (
@@ -114,6 +136,7 @@ function ExerciseDetail({ exerciseType }: { exerciseType: string }) {
                 <th>Reps</th>
                 <th>Avg ROM</th>
                 <th>Form Score</th>
+                {hasWeightData && <th>Weight</th>}
                 <th>Link</th>
               </tr>
             </thead>
@@ -125,6 +148,7 @@ function ExerciseDetail({ exerciseType }: { exerciseType: string }) {
                   <td>{h.total_reps}</td>
                   <td>{h.avg_rom != null ? `${h.avg_rom.toFixed(1)}°` : '—'}</td>
                   <td>{h.avg_form_score != null ? h.avg_form_score.toFixed(1) : '—'}</td>
+                  {hasWeightData && <td>{h.weight_lbs != null ? `${h.weight_lbs} lbs` : '—'}</td>}
                   <td>
                     <Link to={`/session/${h.session_id}`} className="session-link">
                       View

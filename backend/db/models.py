@@ -32,6 +32,9 @@ class UserExerciseProfile(Base):
     best_rom = Column(Float, nullable=True)
     best_form_score = Column(Float, nullable=True)
 
+    # Weight tracking
+    max_weight_lbs = Column(Float, nullable=True)
+
     # Totals
     total_sessions = Column(Integer, default=0)
     total_reps = Column(Integer, default=0)
