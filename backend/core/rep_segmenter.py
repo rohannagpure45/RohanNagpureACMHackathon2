@@ -166,6 +166,12 @@ class RepSegmenter:
             if confidence < 0.15:
                 continue
 
+            # Filter reps that don't achieve the minimum range of motion
+            rep_segment = signal_smooth[start_idx:end_idx + 1]
+            rep_rom = float(np.max(rep_segment) - np.min(rep_segment))
+            if rep_rom < self.config.min_rom_degrees:
+                continue
+
             reps.append(RepBoundary(
                 rep_number=len(reps) + 1,
                 start_frame=frame_numbers[start_idx],
